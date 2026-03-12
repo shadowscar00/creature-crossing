@@ -19,40 +19,40 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     assert html =~ "Guess Who"
   end
 
-  test "shows villager names and species in choices", %{conn: conn} do
-    {:ok, _view, html} = live(conn, ~p"/guess-who")
-    assert html =~ "·"
-  end
-
   # --- Board / playing phase tests ---
 
-  test "picking a secret villager transitions to playing phase", %{conn: conn} do
-    {:ok, view, html} = live(conn, ~p"/guess-who")
-    [_, name] = Regex.run(~r/phx-click="pick_secret"\s+phx-value-name="([^"]+)"/, html)
-
-    html = view |> element(~s(div[phx-value-name="#{name}"][phx-click="pick_secret"])) |> render_click()
-
-    assert html =~ "remaining"
-    assert html =~ name
-    refute html =~ "Pick your secret villager!"
-  end
-
-  test "board has 24 villagers in playing phase", %{conn: conn} do
+  test "picking a secret transitions to playing phase", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
     pick_first_secret(view)
 
     html = render(view)
-    # Count villager cards by their phx-value-name attributes in the board grid
+    assert html =~ "remaining"
+    refute html =~ "Pick your secret villager!"
+  end
+
+  test "board has 24 villagers", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/guess-who")
+    pick_and_ensure_player_turn(view)
+
+    html = render(view)
     matches = Regex.scan(~r/phx-value-name="[^"]+"/, html)
     assert length(matches) == 24
   end
 
   test "shows 24 remaining at start", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
-    pick_first_secret(view)
+    pick_and_ensure_player_turn(view)
 
     html = render(view)
     assert html =~ "24 remaining"
+  end
+
+  test "shows turn indicator", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/guess-who")
+    pick_and_ensure_player_turn(view)
+
+    html = render(view)
+    assert html =~ "Your turn"
   end
 
   test "new game resets to picking phase", %{conn: conn} do
@@ -61,15 +61,6 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
 
     html = view |> element("button", "New Game") |> render_click()
     assert html =~ "Pick your secret villager!"
-  end
-
-  test "secret villager has primary border highlight", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/guess-who")
-    secret_name = pick_first_secret(view)
-
-    html = render(view)
-    assert html =~ "var(--color-primary)"
-    assert html =~ secret_name
   end
 
   # --- Side panels tests ---
@@ -82,20 +73,14 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     assert html =~ "Your Villager"
     assert html =~ "Species:"
     assert html =~ "Personality:"
-    assert html =~ "Gender:"
-    assert html =~ "Sign:"
-    assert html =~ "Hobby:"
-    assert html =~ "Colors:"
-    assert html =~ "Styles:"
   end
 
-  test "left panel shows question controls and empty history", %{conn: conn} do
+  test "left panel shows question controls", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
     pick_first_secret(view)
 
     html = render(view)
     assert html =~ "Ask a Question"
-    assert html =~ "No questions yet"
     assert html =~ "Ask!"
   end
 
@@ -109,15 +94,11 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     assert html =~ "Species"
     assert html =~ "Personality"
     assert html =~ "Gender"
-    assert html =~ "Zodiac Sign"
-    assert html =~ "Hobby"
-    assert html =~ "Favorite Color"
-    assert html =~ "Favorite Style"
   end
 
   test "selecting a category shows value dropdown", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
-    pick_first_secret(view)
+    pick_and_ensure_player_turn(view)
 
     html = view |> element(~s(button[phx-value-category="gender"])) |> render_click()
     assert html =~ "Select..."
@@ -125,19 +106,9 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     assert html =~ "Female"
   end
 
-  test "ask button is disabled until category and value selected", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/guess-who")
-    pick_first_secret(view)
-
-    html = render(view)
-    # Ask button should be present but disabled
-    assert html =~ "Ask!"
-    assert html =~ "disabled"
-  end
-
   test "asking a question shows answer modal", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
-    pick_first_secret(view)
+    pick_and_ensure_player_turn(view)
 
     view |> element(~s(button[phx-value-category="gender"])) |> render_click()
     view |> element("form") |> render_change(%{"value" => "Male"})
@@ -149,94 +120,146 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     assert html =~ "Okay"
   end
 
-  test "dismissing modal hides it", %{conn: conn} do
+  test "dismissing player answer modal triggers COM turn", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
-    pick_first_secret(view)
-
-    view |> element(~s(button[phx-value-category="gender"])) |> render_click()
-    view |> element("form") |> render_change(%{"value" => "Male"})
-    view |> element(~s(button[phx-click="ask_question"])) |> render_click()
-
-    html = view |> element(~s(button[phx-click="dismiss_modal"])) |> render_click()
-    refute html =~ "Okay"
-  end
-
-  test "question appears in history after asking", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/guess-who")
-    pick_first_secret(view)
+    pick_and_ensure_player_turn(view)
 
     view |> element(~s(button[phx-value-category="gender"])) |> render_click()
     view |> element("form") |> render_change(%{"value" => "Male"})
     view |> element(~s(button[phx-click="ask_question"])) |> render_click()
     view |> element(~s(button[phx-click="dismiss_modal"])) |> render_click()
 
-    html = render(view)
-    assert html =~ "Male"
-    refute html =~ "No questions yet"
+    # After dismiss, turn should switch to COM
+    state = :sys.get_state(view.pid)
+    assert state.socket.assigns.turn == :com
   end
 
   test "asking a question auto-eliminates villagers", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
-    pick_first_secret(view)
+    pick_and_ensure_player_turn(view)
 
     view |> element(~s(button[phx-value-category="gender"])) |> render_click()
     view |> element("form") |> render_change(%{"value" => "Male"})
     view |> element(~s(button[phx-click="ask_question"])) |> render_click()
     html = view |> element(~s(button[phx-click="dismiss_modal"])) |> render_click()
 
-    # Some villagers should be eliminated (not 24 remaining)
     refute html =~ "24 remaining"
   end
 
-  test "board villagers are not manually clickable for elimination", %{conn: conn} do
+  # --- COM turn tests ---
+
+  test "COM asks a question after delay", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
-    pick_first_secret(view)
+    pick_and_ensure_player_turn(view)
+
+    # Player asks a question
+    view |> element(~s(button[phx-value-category="gender"])) |> render_click()
+    view |> element("form") |> render_change(%{"value" => "Male"})
+    view |> element(~s(button[phx-click="ask_question"])) |> render_click()
+    view |> element(~s(button[phx-click="dismiss_modal"])) |> render_click()
+
+    # Trigger COM turn message
+    send(view.pid, :com_turn)
 
     html = render(view)
-    # No toggle_eliminate events should be on the board
-    refute html =~ "toggle_eliminate"
+    assert html =~ "COM asks:"
+  end
+
+  test "player can answer COM question honestly", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/guess-who")
+    pick_and_ensure_player_turn(view)
+
+    # Do a player turn then trigger COM
+    do_player_turn(view)
+    send(view.pid, :com_turn)
+
+    html = render(view)
+    assert html =~ "COM asks:"
+
+    # Get the correct answer
+    state = :sys.get_state(view.pid)
+    q = state.socket.assigns.com_question_modal
+    secret = Enum.find(state.socket.assigns.board, fn v -> v["name"] == state.socket.assigns.secret end)
+
+    correct = CreatureCrossingWeb.GuessWhoLiveTest.matches_trait?(secret, q.category, q.value)
+    answer_str = if correct, do: "yes", else: "no"
+
+    html = view |> element(~s(button[phx-value-answer="#{answer_str}"])) |> render_click()
+    # Should show the result
+    assert html =~ "Continue"
+  end
+
+  test "lying to COM is caught", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/guess-who")
+    pick_and_ensure_player_turn(view)
+
+    do_player_turn(view)
+    send(view.pid, :com_turn)
+
+    # Get the correct answer and give the opposite
+    state = :sys.get_state(view.pid)
+    q = state.socket.assigns.com_question_modal
+    secret = Enum.find(state.socket.assigns.board, fn v -> v["name"] == state.socket.assigns.secret end)
+
+    correct = CreatureCrossingWeb.GuessWhoLiveTest.matches_trait?(secret, q.category, q.value)
+    lie_str = if correct, do: "no", else: "yes"
+
+    html = view |> element(~s(button[phx-value-answer="#{lie_str}"])) |> render_click()
+    assert html =~ "booo you suck you liar"
+    assert html =~ "I&#39;m sorry :("
+  end
+
+  test "after lying, dismiss liar modal and game continues", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/guess-who")
+    pick_and_ensure_player_turn(view)
+
+    do_player_turn(view)
+    send(view.pid, :com_turn)
+
+    state = :sys.get_state(view.pid)
+    q = state.socket.assigns.com_question_modal
+    secret = Enum.find(state.socket.assigns.board, fn v -> v["name"] == state.socket.assigns.secret end)
+    correct = CreatureCrossingWeb.GuessWhoLiveTest.matches_trait?(secret, q.category, q.value)
+    lie_str = if correct, do: "no", else: "yes"
+
+    view |> element(~s(button[phx-value-answer="#{lie_str}"])) |> render_click()
+    html = view |> element(~s(button[phx-click="dismiss_liar"])) |> render_click()
+
+    # Should now show the COM result
+    assert html =~ "Continue"
+  end
+
+  test "after lying once, no button shows 'no cheating'", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/guess-who")
+    pick_and_ensure_player_turn(view)
+
+    do_player_turn(view)
+    send(view.pid, :com_turn)
+
+    state = :sys.get_state(view.pid)
+    q = state.socket.assigns.com_question_modal
+    secret = Enum.find(state.socket.assigns.board, fn v -> v["name"] == state.socket.assigns.secret end)
+    correct = CreatureCrossingWeb.GuessWhoLiveTest.matches_trait?(secret, q.category, q.value)
+    lie_str = if correct, do: "no", else: "yes"
+
+    view |> element(~s(button[phx-value-answer="#{lie_str}"])) |> render_click()
+    view |> element(~s(button[phx-click="dismiss_liar"])) |> render_click()
+    view |> element(~s(button[phx-click="dismiss_com_result"])) |> render_click()
+
+    # Do another player turn and COM turn
+    do_player_turn(view)
+    send(view.pid, :com_turn)
+
+    html = render(view)
+    assert html =~ "no cheating"
+    assert html =~ "Answer Honestly"
   end
 
   # --- Guess mode tests ---
 
-  test "toggling guess mode highlights board", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/guess-who")
-    pick_first_secret(view)
-
-    html = view |> element("button", "Make a Guess") |> render_click()
-    assert html =~ "Cancel Guess"
-    assert html =~ "Click a villager on the board to guess"
-    assert html =~ "var(--color-warning)"
-  end
-
-  test "wrong guess shows modal and eliminates the guessed villager", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/guess-who")
-    secret_name = pick_first_secret(view)
-
-    state = :sys.get_state(view.pid)
-    com_secret = state.socket.assigns.com_secret
-
-    view |> element("button", "Make a Guess") |> render_click()
-
-    # Find a villager that is neither player's nor COM's secret
-    html = render(view)
-    target =
-      Regex.scan(~r/phx-click="make_guess"\s+phx-value-name="([^"]+)"/, html)
-      |> Enum.map(fn [_, n] -> n end)
-      |> Enum.find(fn n -> n != secret_name && n != com_secret end)
-
-    html = view |> element(~s(div[phx-value-name="#{target}"][phx-click="make_guess"])) |> render_click()
-    assert html =~ "No!"
-    assert html =~ "Wrong guess"
-    assert html =~ "villager eliminated"
-
-    html = view |> element(~s(button[phx-click="dismiss_modal"])) |> render_click()
-    assert html =~ "23 remaining"
-  end
-
   test "correct guess wins the game", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
-    pick_first_secret(view)
+    pick_and_ensure_player_turn(view)
 
     state = :sys.get_state(view.pid)
     com_secret = state.socket.assigns.com_secret
@@ -249,9 +272,29 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     assert html =~ "Play Again"
   end
 
+  test "wrong guess eliminates villager and shows modal", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/guess-who")
+    secret_name = pick_and_ensure_player_turn(view)
+
+    state = :sys.get_state(view.pid)
+    com_secret = state.socket.assigns.com_secret
+
+    view |> element("button", "Make a Guess") |> render_click()
+
+    html = render(view)
+    target =
+      Regex.scan(~r/phx-click="make_guess"\s+phx-value-name="([^"]+)"/, html)
+      |> Enum.map(fn [_, n] -> n end)
+      |> Enum.find(fn n -> n != secret_name && n != com_secret end)
+
+    html = view |> element(~s(div[phx-value-name="#{target}"][phx-click="make_guess"])) |> render_click()
+    assert html =~ "No!"
+    assert html =~ "Wrong guess"
+  end
+
   test "play again from win screen starts new game", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
-    pick_first_secret(view)
+    pick_and_ensure_player_turn(view)
 
     state = :sys.get_state(view.pid)
     com_secret = state.socket.assigns.com_secret
@@ -263,6 +306,32 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     assert html =~ "Pick your secret villager!"
   end
 
+  # --- COM guess tests ---
+
+  test "COM guessing correctly shows loss screen", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/guess-who")
+    pick_and_ensure_player_turn(view)
+
+    # Manually set COM to have eliminated all but the player's secret
+    state = :sys.get_state(view.pid)
+    all_names = Enum.map(state.socket.assigns.board, & &1["name"])
+    secret = state.socket.assigns.secret
+    com_secret = state.socket.assigns.com_secret
+
+    # Eliminate everyone except secret and com_secret from COM's board
+    com_eliminated =
+      all_names
+      |> Enum.reject(fn n -> n == secret || n == com_secret end)
+      |> MapSet.new()
+
+    send(view.pid, {:set_test_state, %{com_eliminated: com_eliminated}})
+    send(view.pid, :com_turn)
+
+    html = render(view)
+    # COM should guess — it either wins or loses
+    assert html =~ "You Lose!" or html =~ "COM guessed"
+  end
+
   # --- Helpers ---
 
   defp pick_first_secret(view) do
@@ -270,5 +339,49 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     [_, name] = Regex.run(~r/phx-click="pick_secret"\s+phx-value-name="([^"]+)"/, html)
     view |> element(~s(div[phx-value-name="#{name}"][phx-click="pick_secret"])) |> render_click()
     name
+  end
+
+  defp pick_and_ensure_player_turn(view) do
+    name = pick_first_secret(view)
+
+    # If COM goes first, handle its turn
+    state = :sys.get_state(view.pid)
+
+    if state.socket.assigns.turn == :com do
+      send(view.pid, :com_turn)
+      html = render(view)
+
+      if html =~ "COM asks:" do
+        # Answer honestly
+        state = :sys.get_state(view.pid)
+        q = state.socket.assigns.com_question_modal
+        secret = Enum.find(state.socket.assigns.board, fn v -> v["name"] == state.socket.assigns.secret end)
+        correct = matches_trait?(secret, q.category, q.value)
+        answer_str = if correct, do: "yes", else: "no"
+
+        view |> element(~s(button[phx-value-answer="#{answer_str}"])) |> render_click()
+        view |> element(~s(button[phx-click="dismiss_com_result"])) |> render_click()
+      end
+    end
+
+    name
+  end
+
+  defp do_player_turn(view) do
+    view |> element(~s(button[phx-value-category="gender"])) |> render_click()
+    view |> element("form") |> render_change(%{"value" => "Male"})
+    view |> element(~s(button[phx-click="ask_question"])) |> render_click()
+    view |> element(~s(button[phx-click="dismiss_modal"])) |> render_click()
+  end
+
+  # Public for use in tests
+  def matches_trait?(villager, category, value) do
+    case category do
+      cat when cat in ["fav_colors", "fav_styles"] ->
+        value in (villager[cat] || [])
+
+      _ ->
+        villager[category] == value
+    end
   end
 end

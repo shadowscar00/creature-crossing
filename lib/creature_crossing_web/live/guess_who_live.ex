@@ -1,20 +1,21 @@
 defmodule CreatureCrossingWeb.GuessWhoLive do
   @moduledoc """
-  Guess Who game using Animal Crossing NH villagers.
+  Guess Who game with COM opponent using Animal Crossing NH villagers.
 
   Flow:
   1. Fetch villagers, randomly select 24 for the board
-  2. Show 3 random choices from the 24 for player to pick their secret villager
-  3. Player picks 1 — game begins with COM getting a random secret
-  4. Player asks trait-based questions or makes guesses
-  5. Answers auto-eliminate villagers from the board
-  6. Correct guess wins the game
+  2. Show 3 random choices for player to pick their secret villager
+  3. COM picks its own secret, random first turn
+  4. Players alternate: ask trait questions or make guesses
+  5. COM answers player questions; player answers COM questions (lie detection)
+  6. First to correctly guess opponent's secret wins
   """
   use CreatureCrossingWeb, :live_view
 
   alias CreatureCrossing.Nookipedia
 
   @board_size 24
+  @com_delay_ms 1200
 
   @question_templates %{
     "species" => "Is your villager a %s?",
@@ -36,6 +37,8 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
     {"fav_styles", "Favorite Style"}
   ]
 
+  @all_categories ~w(species personality gender sign hobby fav_colors fav_styles)
+
   @impl true
   def mount(_params, _session, socket) do
     {:ok, villagers} = Nookipedia.list_villagers()
@@ -53,11 +56,17 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
       secret: nil,
       com_secret: nil,
       eliminated: MapSet.new(),
+      com_eliminated: MapSet.new(),
       phase: :picking,
+      turn: nil,
       question_category: nil,
       question_value: nil,
       answer_modal: nil,
+      com_question_modal: nil,
+      liar_modal: false,
+      liar_caught: false,
       history: [],
+      com_history: [],
       guess_mode: false
     )
   end
@@ -89,6 +98,54 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
     String.replace(template, "%s", value)
   end
 
+  defp com_remaining(socket) do
+    socket.assigns.board
+    |> Enum.reject(fn v ->
+      MapSet.member?(socket.assigns.com_eliminated, v["name"]) ||
+        v["name"] == socket.assigns.com_secret
+    end)
+  end
+
+  defp schedule_com_turn(socket) do
+    Process.send_after(self(), :com_turn, @com_delay_ms)
+    assign(socket, turn: :com)
+  end
+
+  defp start_player_turn(socket) do
+    assign(socket, turn: :player)
+  end
+
+  # COM picks a random question from categories that still have useful info
+  defp com_pick_question(socket) do
+    remaining = com_remaining(socket)
+    trait_options = build_trait_options(remaining)
+    already_asked = Enum.map(socket.assigns.com_history, fn e -> {e.category, e.value} end)
+
+    # Try each category randomly until we find an un-asked combo
+    categories = Enum.shuffle(@all_categories)
+
+    Enum.find_value(categories, fn cat ->
+      values = trait_options[cat] || []
+      available = Enum.reject(values, fn v -> {cat, v} in already_asked end)
+
+      case available do
+        [] -> nil
+        vals -> {cat, Enum.random(vals)}
+      end
+    end)
+  end
+
+  defp com_should_guess?(socket) do
+    remaining_count = length(com_remaining(socket))
+    remaining_count <= 3
+  end
+
+  defp com_make_guess(socket) do
+    remaining = com_remaining(socket)
+    guess = Enum.random(remaining)
+    guess["name"]
+  end
+
   # --- Events ---
 
   @impl true
@@ -99,12 +156,24 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
       |> Enum.random()
       |> Map.get("name")
 
-    {:noreply, assign(socket, secret: name, com_secret: com_secret, phase: :playing)}
+    socket =
+      assign(socket,
+        secret: name,
+        com_secret: com_secret,
+        phase: :playing
+      )
+      |> start_player_turn()
+
+    {:noreply, socket}
   end
 
   @impl true
   def handle_event("select_category", %{"category" => category}, socket) do
-    {:noreply, assign(socket, question_category: category, question_value: nil, guess_mode: false)}
+    if socket.assigns.turn == :player do
+      {:noreply, assign(socket, question_category: category, question_value: nil, guess_mode: false)}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
@@ -115,6 +184,8 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
 
   @impl true
   def handle_event("ask_question", _params, socket) do
+    if socket.assigns.turn != :player, do: {:noreply, socket}
+
     %{question_category: cat, question_value: val, com_secret: com_name, board: board} =
       socket.assigns
 
@@ -122,7 +193,7 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
     answer = villager_matches_trait?(com_villager, cat, val)
     question_text = format_question(cat, val)
 
-    # Auto-eliminate based on answer
+    # Auto-eliminate from player's board
     eliminated = socket.assigns.eliminated
 
     new_eliminated =
@@ -142,7 +213,7 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
         end
       end)
 
-    entry = %{question: question_text, answer: answer}
+    entry = %{question: question_text, answer: answer, who: :player, category: cat, value: val}
 
     {:noreply,
      assign(socket,
@@ -156,20 +227,28 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
 
   @impl true
   def handle_event("dismiss_modal", _params, socket) do
-    {:noreply, assign(socket, answer_modal: nil)}
+    # After player dismisses their answer modal, it's COM's turn
+    socket = assign(socket, answer_modal: nil)
+    {:noreply, schedule_com_turn(socket)}
   end
 
   @impl true
   def handle_event("toggle_guess_mode", _params, socket) do
-    {:noreply, assign(socket, guess_mode: !socket.assigns.guess_mode, question_category: nil, question_value: nil)}
+    if socket.assigns.turn == :player do
+      {:noreply, assign(socket, guess_mode: !socket.assigns.guess_mode, question_category: nil, question_value: nil)}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
   def handle_event("make_guess", %{"name" => name}, socket) do
+    if socket.assigns.turn != :player, do: {:noreply, socket}
+
     correct = name == socket.assigns.com_secret
 
     if correct do
-      entry = %{question: "Guessed #{name}", answer: true}
+      entry = %{question: "You guessed #{name}", answer: true, who: :player}
 
       {:noreply,
        assign(socket,
@@ -179,7 +258,7 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
          answer_modal: nil
        )}
     else
-      entry = %{question: "Guessed #{name}", answer: false}
+      entry = %{question: "You guessed #{name}", answer: false, who: :player}
       eliminated = MapSet.put(socket.assigns.eliminated, name)
 
       {:noreply,
@@ -192,9 +271,158 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
     end
   end
 
+  # Player answers COM's question
+  @impl true
+  def handle_event("answer_com", %{"answer" => given_answer}, socket) do
+    %{com_question_modal: q, secret: secret_name, board: board} = socket.assigns
+    secret_villager = Enum.find(board, fn v -> v["name"] == secret_name end)
+    correct_answer = villager_matches_trait?(secret_villager, q.category, q.value)
+    given_bool = given_answer == "yes"
+
+    if given_bool != correct_answer do
+      # Caught lying!
+      {:noreply, assign(socket, liar_modal: true, liar_caught: true)}
+    else
+      # Honest answer — COM processes it
+      {:noreply, process_com_answer(socket, correct_answer)}
+    end
+  end
+
+  # Auto-honest answer after being caught lying
+  @impl true
+  def handle_event("answer_com_honest", _params, socket) do
+    %{com_question_modal: q, secret: secret_name, board: board} = socket.assigns
+    secret_villager = Enum.find(board, fn v -> v["name"] == secret_name end)
+    correct_answer = villager_matches_trait?(secret_villager, q.category, q.value)
+    {:noreply, process_com_answer(socket, correct_answer)}
+  end
+
+  @impl true
+  def handle_event("dismiss_liar", _params, socket) do
+    # After liar modal, send the correct answer anyway
+    %{com_question_modal: q, secret: secret_name, board: board} = socket.assigns
+    secret_villager = Enum.find(board, fn v -> v["name"] == secret_name end)
+    correct_answer = villager_matches_trait?(secret_villager, q.category, q.value)
+
+    {:noreply, socket |> assign(liar_modal: false) |> process_com_answer(correct_answer)}
+  end
+
+  @impl true
+  def handle_event("dismiss_com_result", _params, socket) do
+    # After seeing COM's question result, it's player's turn
+    {:noreply, socket |> assign(com_question_modal: nil) |> start_player_turn()}
+  end
+
   @impl true
   def handle_event("new_game", _params, socket) do
     {:noreply, new_game(socket)}
+  end
+
+  # --- COM turn logic ---
+
+  defp process_com_answer(socket, answer) do
+    q = socket.assigns.com_question_modal
+
+    # COM eliminates from its internal board
+    com_eliminated = socket.assigns.com_eliminated
+
+    new_com_eliminated =
+      Enum.reduce(socket.assigns.board, com_eliminated, fn villager, acc ->
+        name = villager["name"]
+
+        if name == socket.assigns.com_secret || MapSet.member?(acc, name) do
+          acc
+        else
+          matches = villager_matches_trait?(villager, q.category, q.value)
+
+          if (answer && !matches) || (!answer && matches) do
+            MapSet.put(acc, name)
+          else
+            acc
+          end
+        end
+      end)
+
+    entry = %{question: q.question, answer: answer, who: :com, category: q.category, value: q.value}
+
+    socket
+    |> assign(
+      com_eliminated: new_com_eliminated,
+      com_history: [entry | socket.assigns.com_history],
+      # Show result to player before continuing
+      com_question_modal: Map.merge(q, %{answered: true, answer: answer})
+    )
+  end
+
+  # Test helper to set state directly
+  @impl true
+  def handle_info({:set_test_state, assigns_map}, socket) do
+    {:noreply, Enum.reduce(assigns_map, socket, fn {k, v}, s -> assign(s, k, v) end)}
+  end
+
+  @impl true
+  def handle_info(:com_turn, socket) do
+    if socket.assigns.phase != :playing do
+      {:noreply, socket}
+    else
+      if com_should_guess?(socket) do
+        guess_name = com_make_guess(socket)
+        correct = guess_name == socket.assigns.secret
+
+        if correct do
+          entry = %{question: "COM guessed #{guess_name}", answer: true, who: :com}
+
+          {:noreply,
+           assign(socket,
+             phase: :lost,
+             com_history: [entry | socket.assigns.com_history]
+           )}
+        else
+          entry = %{question: "COM guessed #{guess_name}", answer: false, who: :com}
+          com_eliminated = MapSet.put(socket.assigns.com_eliminated, guess_name)
+
+          {:noreply,
+           assign(socket,
+             com_history: [entry | socket.assigns.com_history],
+             com_eliminated: com_eliminated,
+             com_question_modal: %{question: "COM guessed: #{guess_name}", answer: false, guess: true, answered: true}
+           )}
+        end
+      else
+        case com_pick_question(socket) do
+          nil ->
+            # No more questions to ask, COM guesses
+            guess_name = com_make_guess(socket)
+            correct = guess_name == socket.assigns.secret
+
+            if correct do
+              entry = %{question: "COM guessed #{guess_name}", answer: true, who: :com}
+              {:noreply, assign(socket, phase: :lost, com_history: [entry | socket.assigns.com_history])}
+            else
+              entry = %{question: "COM guessed #{guess_name}", answer: false, who: :com}
+              com_eliminated = MapSet.put(socket.assigns.com_eliminated, guess_name)
+              {:noreply, assign(socket,
+                com_history: [entry | socket.assigns.com_history],
+                com_eliminated: com_eliminated,
+                com_question_modal: %{question: "COM guessed: #{guess_name}", answer: false, guess: true, answered: true}
+              )}
+            end
+
+          {cat, val} ->
+            question_text = format_question(cat, val)
+
+            {:noreply,
+             assign(socket,
+               com_question_modal: %{
+                 question: question_text,
+                 category: cat,
+                 value: val,
+                 answered: false
+               }
+             )}
+        end
+      end
+    end
   end
 
   # --- Render ---
@@ -204,7 +432,8 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
     case assigns.phase do
       :picking -> render_picking(assigns)
       :playing -> render_playing(assigns)
-      :won -> render_won(assigns)
+      :won -> render_end(assigns, true)
+      :lost -> render_end(assigns, false)
     end
   end
 
@@ -253,7 +482,8 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
         do: trait_options[assigns.question_category] || [],
         else: []
 
-    can_ask = assigns.question_category != nil && assigns.question_value != nil
+    can_ask = assigns.turn == :player && assigns.question_category != nil && assigns.question_value != nil
+    is_player_turn = assigns.turn == :player
 
     assigns =
       assigns
@@ -261,6 +491,7 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
       |> assign(:secret_villager, secret_villager)
       |> assign(:dropdown_values, dropdown_values)
       |> assign(:can_ask, can_ask)
+      |> assign(:is_player_turn, is_player_turn)
       |> assign(:category_labels, @category_labels)
 
     ~H"""
@@ -275,6 +506,8 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
           can_ask={@can_ask}
           guess_mode={@guess_mode}
           history={@history}
+          com_history={@com_history}
+          is_player_turn={@is_player_turn}
         />
       </div>
 
@@ -289,6 +522,9 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
           <h1 style="font-size: 2rem;" class="font-extrabold tracking-tight">Guess Who</h1>
           <div style="font-size: 0.875rem; text-align: right;">
             <p class="font-bold text-primary">{@remaining} remaining</p>
+            <p style={"font-size: 0.75rem; font-weight: 600; color: #{if @is_player_turn, do: "var(--color-success)", else: "var(--color-warning)"};"}>
+              {if @is_player_turn, do: "Your turn", else: "COM's turn..."}
+            </p>
           </div>
         </div>
 
@@ -296,13 +532,13 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
         <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.75rem;">
           <div
             :for={villager <- @board}
-            phx-click={if @guess_mode && !MapSet.member?(@eliminated, villager["name"]) && villager["name"] != @secret, do: "make_guess", else: nil}
+            phx-click={if @guess_mode && @is_player_turn && !MapSet.member?(@eliminated, villager["name"]) && villager["name"] != @secret, do: "make_guess", else: nil}
             phx-value-name={villager["name"]}
             style={"border: 2px solid #{cond do
               villager["name"] == @secret -> "var(--color-primary)"
-              @guess_mode && !MapSet.member?(@eliminated, villager["name"]) -> "var(--color-warning)"
+              @guess_mode && @is_player_turn && !MapSet.member?(@eliminated, villager["name"]) -> "var(--color-warning)"
               true -> "var(--color-neutral)"
-            end}; border-radius: 0.75rem; padding: 0.5rem; background: var(--color-base-200); text-align: center; transition: opacity 0.2s;#{if MapSet.member?(@eliminated, villager["name"]), do: " opacity: 0.2;", else: ""}#{if @guess_mode && !MapSet.member?(@eliminated, villager["name"]) && villager["name"] != @secret, do: " cursor: pointer;", else: ""}"}
+            end}; border-radius: 0.75rem; padding: 0.5rem; background: var(--color-base-200); text-align: center; transition: opacity 0.2s;#{if MapSet.member?(@eliminated, villager["name"]), do: " opacity: 0.2;", else: ""}#{if @guess_mode && @is_player_turn && !MapSet.member?(@eliminated, villager["name"]) && villager["name"] != @secret, do: " cursor: pointer;", else: ""}"}
           >
             <img
               src={villager["image_url"]}
@@ -324,22 +560,38 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
       </div>
     </div>
 
-    <%!-- Answer modal --%>
+    <%!-- Player's answer modal (after asking a question) --%>
     <.answer_modal :if={@answer_modal} answer_modal={@answer_modal} />
+
+    <%!-- COM question modal (player must answer) --%>
+    <.com_question_modal
+      :if={@com_question_modal && !@liar_modal}
+      com_question_modal={@com_question_modal}
+      liar_caught={@liar_caught}
+      secret_villager={@secret_villager}
+    />
+
+    <%!-- Liar modal --%>
+    <.liar_modal :if={@liar_modal} />
     """
   end
 
-  defp render_won(assigns) do
+  defp render_end(assigns, won) do
+    assigns = assign(assigns, :won, won)
+
     ~H"""
     <div class="max-w-4xl mx-auto px-4" style="padding-top: 2rem; text-align: center;">
-      <h1 style="font-size: 3rem; margin-bottom: 0.5rem;" class="font-extrabold tracking-tight">
-        You Win!
+      <h1 style={"font-size: 3rem; margin-bottom: 0.5rem; color: #{if @won, do: "var(--color-success)", else: "var(--color-error)"};"} class="font-extrabold tracking-tight">
+        {if @won, do: "You Win!", else: "You Lose!"}
       </h1>
       <p style="font-size: 1.25rem; margin-bottom: 0.5rem;" class="text-base-content/70">
-        The secret villager was <span class="text-primary font-bold">{@com_secret}</span>
+        {if @won, do: "You correctly guessed", else: "COM correctly guessed your villager"}
+      </p>
+      <p :if={@won} style="margin-bottom: 0.5rem;">
+        COM's secret was <span class="text-primary font-bold">{@com_secret}</span>
       </p>
       <p style="margin-bottom: 1.5rem;" class="text-base-content/70">
-        Solved in {length(@history)} {if length(@history) == 1, do: "turn", else: "turns"}
+        Game lasted {length(@history) + length(@com_history)} turns
       </p>
       <button phx-click="new_game" class="btn btn-primary btn-lg">
         Play Again
@@ -363,6 +615,7 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
             :for={{cat_key, cat_label} <- @category_labels}
             phx-click="select_category"
             phx-value-category={cat_key}
+            disabled={!@is_player_turn}
             class={"btn btn-xs #{if @question_category == cat_key, do: "btn-primary", else: "btn-ghost"}"}
           >
             {cat_label}
@@ -382,7 +635,7 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
           </select>
         </form>
 
-        <%!-- Ask button — always visible, disabled until ready --%>
+        <%!-- Ask button --%>
         <button
           phx-click="ask_question"
           disabled={!@can_ask}
@@ -395,6 +648,7 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
         <div style="margin-top: 0.375rem; border-top: 1px solid color-mix(in oklch, var(--color-neutral) 40%, transparent); padding-top: 0.375rem;">
           <button
             phx-click="toggle_guess_mode"
+            disabled={!@is_player_turn}
             class={"btn btn-sm btn-block #{if @guess_mode, do: "btn-warning", else: "btn-ghost"}"}
           >
             {if @guess_mode, do: "Cancel Guess", else: "Make a Guess"}
@@ -408,14 +662,18 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
       <%!-- Question history --%>
       <div style="padding: 0.5rem; max-height: 14rem; overflow-y: auto;">
         <p style="font-weight: 700; font-size: 0.8rem; margin-bottom: 0.25rem;">History</p>
-        <div :if={@history == []} style="font-size: 0.75rem; opacity: 0.5;">
+        <div :if={@history == [] && @com_history == []} style="font-size: 0.75rem; opacity: 0.5;">
           No questions yet
         </div>
+        <%!-- Interleave player and COM history by showing all, newest first --%>
         <div
-          :for={entry <- @history}
+          :for={entry <- interleave_history(@history, @com_history)}
           style="font-size: 0.7rem; padding: 0.25rem 0; border-bottom: 1px solid color-mix(in oklch, var(--color-neutral) 20%, transparent);"
         >
-          <p>{entry.question}</p>
+          <p>
+            <span :if={entry.who == :com} style="font-weight: 700; opacity: 0.6;">COM: </span>
+            {entry.question}
+          </p>
           <p style={"font-weight: 700; color: #{if entry.answer, do: "var(--color-success)", else: "var(--color-error)"};"}>
             {if entry.answer, do: "Yes", else: "No"}
           </p>
@@ -469,5 +727,77 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
       </div>
     </div>
     """
+  end
+
+  defp com_question_modal(assigns) do
+    answered = Map.get(assigns.com_question_modal, :answered, false)
+    is_guess = Map.get(assigns.com_question_modal, :guess, false)
+    assigns = assign(assigns, :answered, answered)
+    assigns = assign(assigns, :is_guess, is_guess)
+
+    ~H"""
+    <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
+      <div style="background: var(--color-base-100); border: 2px solid var(--color-neutral); border-radius: 1rem; padding: 2rem; text-align: center; max-width: 28rem; width: 90%;">
+        <p style="font-weight: 700; font-size: 0.8rem; opacity: 0.6; margin-bottom: 0.5rem;">COM asks:</p>
+        <p style="font-size: 1.1rem; margin-bottom: 1rem;">{@com_question_modal.question}</p>
+
+        <%!-- Before answering: show Yes/No buttons (or auto-answer if caught lying before) --%>
+        <div :if={!@answered && !@is_guess && !@liar_caught} style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1rem; flex-wrap: wrap;">
+          <button phx-click="answer_com" phx-value-answer="yes" class="btn btn-success" style="min-width: 6rem;">
+            Yes
+          </button>
+          <button phx-click="answer_com" phx-value-answer="no" class="btn btn-error" style="min-width: 6rem;">
+            No
+          </button>
+        </div>
+        <div :if={!@answered && !@is_guess && @liar_caught} style="text-align: center; margin-bottom: 1rem;">
+          <p style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.5rem;">no cheating &gt;:(</p>
+          <button phx-click="answer_com_honest" class="btn btn-primary" style="min-width: 8rem;">
+            Answer Honestly
+          </button>
+        </div>
+
+        <%!-- After answering: show result --%>
+        <div :if={@answered}>
+          <p style={"font-size: 2rem; font-weight: 800; margin-bottom: 1rem; color: #{if @com_question_modal.answer, do: "var(--color-success)", else: "var(--color-error)"};"}>
+            {if @com_question_modal.answer, do: "Yes!", else: "No!"}
+          </p>
+          <p :if={@is_guess} style="font-size: 0.875rem; opacity: 0.7; margin-bottom: 1rem;">
+            COM guessed wrong!
+          </p>
+          <button phx-click="dismiss_com_result" class="btn btn-primary btn-wide">
+            Continue
+          </button>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  defp liar_modal(assigns) do
+    ~H"""
+    <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 60;">
+      <div style="background: var(--color-base-100); border: 2px solid var(--color-error); border-radius: 1rem; padding: 2rem; text-align: center; max-width: 24rem; width: 90%;">
+        <p style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem;">
+          booo you suck you liar
+        </p>
+        <button phx-click="dismiss_liar" class="btn btn-error btn-wide">
+          I'm sorry :(
+        </button>
+      </div>
+    </div>
+    """
+  end
+
+  # Combine player and COM histories into a single newest-first list.
+  # Each entry already has a :who field. Since turns alternate and both
+  # lists are newest-first, we just zip them back together.
+  defp interleave_history(player_history, com_history) do
+    p = Enum.reverse(player_history)
+    c = Enum.reverse(com_history)
+    Enum.zip_with([p, c], fn [a, b] -> [a, b] end)
+    |> List.flatten()
+    |> Kernel.++(Enum.drop(p, length(c)) ++ Enum.drop(c, length(p)))
+    |> Enum.reverse()
   end
 end
