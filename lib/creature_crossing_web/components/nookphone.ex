@@ -38,20 +38,26 @@ defmodule CreatureCrossingWeb.Components.Nookphone do
     <div
       id="nookphone-overlay"
       class="fixed inset-0 z-50 hidden"
-      phx-click-away={close_nookphone()}
       phx-window-keydown={close_nookphone()}
       phx-key="Escape"
     >
-      <%!-- Backdrop --%>
+      <%!-- Backdrop — clicking it closes the modal --%>
       <div
         id="nookphone-backdrop"
         class="absolute inset-0 bg-black/40 transition-opacity duration-300 opacity-0"
       />
 
-      <%!-- Phone modal --%>
-      <div class="absolute inset-0 flex items-center justify-center p-4">
+      <%!-- Centering container — clicks here (outside modal) close it --%>
+      <div
+        id="nookphone-clickaway"
+        phx-click={close_nookphone()}
+        class="absolute inset-0 flex items-center justify-center p-4"
+      >
+        <%!-- Phone modal — stop click propagation so clicking inside doesn't close --%>
         <div
           id="nookphone-modal"
+          phx-click={%JS{}}
+          onclick="event.stopPropagation()"
           class="relative bg-accent/90 rounded-3xl shadow-2xl p-6 w-56 h-96
                  border-[6px] border-neutral/80 transform transition-all duration-300
                  scale-75 opacity-0 flex flex-col"
