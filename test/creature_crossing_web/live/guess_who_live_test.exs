@@ -140,7 +140,7 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     pick_first_secret(view)
 
     view |> element(~s(button[phx-value-category="gender"])) |> render_click()
-    view |> element("select") |> render_change(%{"value" => "Male"})
+    view |> element("form") |> render_change(%{"value" => "Male"})
 
     html = view |> element(~s(button[phx-click="ask_question"])) |> render_click()
 
@@ -154,7 +154,7 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     pick_first_secret(view)
 
     view |> element(~s(button[phx-value-category="gender"])) |> render_click()
-    view |> element("select") |> render_change(%{"value" => "Male"})
+    view |> element("form") |> render_change(%{"value" => "Male"})
     view |> element(~s(button[phx-click="ask_question"])) |> render_click()
 
     html = view |> element(~s(button[phx-click="dismiss_modal"])) |> render_click()
@@ -166,7 +166,7 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     pick_first_secret(view)
 
     view |> element(~s(button[phx-value-category="gender"])) |> render_click()
-    view |> element("select") |> render_change(%{"value" => "Male"})
+    view |> element("form") |> render_change(%{"value" => "Male"})
     view |> element(~s(button[phx-click="ask_question"])) |> render_click()
     view |> element(~s(button[phx-click="dismiss_modal"])) |> render_click()
 
@@ -180,7 +180,7 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     pick_first_secret(view)
 
     view |> element(~s(button[phx-value-category="gender"])) |> render_click()
-    view |> element("select") |> render_change(%{"value" => "Male"})
+    view |> element("form") |> render_change(%{"value" => "Male"})
     view |> element(~s(button[phx-click="ask_question"])) |> render_click()
     html = view |> element(~s(button[phx-click="dismiss_modal"])) |> render_click()
 

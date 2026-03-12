@@ -109,6 +109,7 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
 
   @impl true
   def handle_event("select_value", %{"value" => value}, socket) do
+    value = if value == "", do: nil, else: value
     {:noreply, assign(socket, question_value: value)}
   end
 
@@ -367,10 +368,9 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
         </div>
 
         <%!-- Value dropdown --%>
-        <div :if={@question_category} style="margin-bottom: 0.375rem;">
+        <form :if={@question_category} phx-change="select_value" style="margin-bottom: 0.375rem;">
           <select
             style="width: 100%; padding: 0.25rem 0.5rem; border-radius: 0.375rem; border: 1px solid var(--color-neutral); background: var(--color-base-100); font-size: 0.8rem;"
-            phx-change="select_value"
             name="value"
           >
             <option value="">Select...</option>
@@ -378,7 +378,7 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
               {val}
             </option>
           </select>
-        </div>
+        </form>
 
         <%!-- Ask button — always visible, disabled until ready --%>
         <button
