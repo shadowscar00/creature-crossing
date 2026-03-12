@@ -18,15 +18,17 @@ defmodule CreatureCrossingWeb.Components.NookphoneTest do
       assert html =~ "NookPhone"
     end
 
-    test "renders all three app buttons" do
+    test "renders all four app buttons" do
       html = render_component(&Nookphone.nookphone/1, current_path: "/")
       assert html =~ "Critter Tool"
+      assert html =~ "Home"
       assert html =~ "Guess Who"
       assert html =~ "Match Game"
     end
 
     test "renders correct navigation links" do
       html = render_component(&Nookphone.nookphone/1, current_path: "/")
+      assert html =~ ~s(href="/")
       assert html =~ ~s(href="/creature-crossing")
       assert html =~ ~s(href="/guess-who")
       assert html =~ ~s(href="/match-game")
