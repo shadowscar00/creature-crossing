@@ -11,53 +11,8 @@ defmodule CreatureCrossingWeb.Layouts do
   # and other static content.
   embed_templates "layouts/*"
 
-  @doc """
-  Renders your app layout.
-
-  This function is typically invoked from every template,
-  and it often contains your application menu, sidebar,
-  or similar.
-
-  ## Examples
-
-      <Layouts.app flash={@flash}>
-        <h1>Content</h1>
-      </Layouts.app>
-
-  """
-  attr :flash, :map, required: true, doc: "the map of flash messages"
-
-  attr :current_scope, :map,
-    default: nil,
-    doc: "the current [scope](https://hexdocs.pm/phoenix/scopes.html)"
-
-  slot :inner_block, required: true
-
-  def app(assigns) do
-    ~H"""
-    <header class="navbar bg-primary text-primary-content px-4 sm:px-6 lg:px-8 rounded-b-2xl shadow-md">
-      <div class="flex-none">
-        <CreatureCrossingWeb.Components.Nookphone.nookphone current_path="" />
-      </div>
-      <div class="flex-1">
-        <a href="/" class="flex items-center gap-2 text-lg font-extrabold tracking-tight">
-          Creature Crossing
-        </a>
-      </div>
-      <div class="flex-none">
-        <.theme_toggle />
-      </div>
-    </header>
-
-    <main class="px-4 py-10 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-4xl space-y-4">
-        {render_slot(@inner_block)}
-      </div>
-    </main>
-
-    <.flash_group flash={@flash} />
-    """
-  end
+  # The app layout is defined in layouts/app.html.heex via embed_templates.
+  # It renders the navbar with Nookphone, theme toggle, main content, and flash messages.
 
   @doc """
   Shows the flash group with standard titles and content.

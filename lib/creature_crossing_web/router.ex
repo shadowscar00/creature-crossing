@@ -14,10 +14,17 @@ defmodule CreatureCrossingWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", CreatureCrossingWeb do
-    pipe_through :browser
+  live_session :default,
+    on_mount: [{CreatureCrossingWeb.LiveHelpers, :assign_current_path}],
+    layout: {CreatureCrossingWeb.Layouts, :app} do
+    scope "/", CreatureCrossingWeb do
+      pipe_through :browser
 
-    get "/", PageController, :home
+      live "/", HomeLive
+      live "/creature-crossing", CreatureCrossingLive
+      live "/guess-who", GuessWhoLive
+      live "/match-game", MatchGameLive
+    end
   end
 
   # Other scopes may use custom stacks.
