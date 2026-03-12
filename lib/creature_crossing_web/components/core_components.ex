@@ -98,7 +98,7 @@ defmodule CreatureCrossingWeb.CoreComponents do
 
     assigns =
       assign_new(assigns, :class, fn ->
-        ["btn", Map.fetch!(variants, assigns[:variant])]
+        ["btn rounded-xl font-bold", Map.fetch!(variants, assigns[:variant])]
       end)
 
     if rest[:href] || rest[:navigate] || rest[:patch] do

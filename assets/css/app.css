@@ -4,7 +4,7 @@
 @import "tailwindcss" source(none);
 @source "../css";
 @source "../js";
-@source "../../lib/creature_crossing_tmp_web";
+@source "../../lib/creature_crossing_web";
 
 /* A Tailwind plugin that makes "hero-#{ICON}" classes available.
    The heroicons installation itself is managed by your mix.exs */
@@ -21,71 +21,93 @@
   curl -sLO https://github.com/saadeghi/daisyui/releases/latest/download/daisyui-theme.js
   We ship with two themes, a light one inspired on Phoenix colors and a dark one inspired
   on Elixir colors. Build your own at: https://daisyui.com/theme-generator/ */
+/* AC Night theme — deep evening sky blues, warm lantern golds */
 @plugin "../vendor/daisyui-theme" {
   name: "dark";
   default: false;
   prefersdark: true;
   color-scheme: "dark";
-  --color-base-100: oklch(30.33% 0.016 252.42);
-  --color-base-200: oklch(25.26% 0.014 253.1);
-  --color-base-300: oklch(20.15% 0.012 254.09);
-  --color-base-content: oklch(97.807% 0.029 256.847);
-  --color-primary: oklch(58% 0.233 277.117);
-  --color-primary-content: oklch(96% 0.018 272.314);
-  --color-secondary: oklch(58% 0.233 277.117);
-  --color-secondary-content: oklch(96% 0.018 272.314);
-  --color-accent: oklch(60% 0.25 292.717);
-  --color-accent-content: oklch(96% 0.016 293.756);
-  --color-neutral: oklch(37% 0.044 257.287);
-  --color-neutral-content: oklch(98% 0.003 247.858);
-  --color-info: oklch(58% 0.158 241.966);
-  --color-info-content: oklch(97% 0.013 236.62);
-  --color-success: oklch(60% 0.118 184.704);
-  --color-success-content: oklch(98% 0.014 180.72);
-  --color-warning: oklch(66% 0.179 58.318);
-  --color-warning-content: oklch(98% 0.022 95.277);
-  --color-error: oklch(58% 0.253 17.585);
-  --color-error-content: oklch(96% 0.015 12.422);
-  --radius-selector: 0.25rem;
-  --radius-field: 0.25rem;
-  --radius-box: 0.5rem;
-  --size-selector: 0.21875rem;
-  --size-field: 0.21875rem;
+  /* Deep night-sky blue backgrounds */
+  --color-base-100: oklch(28% 0.03 240);
+  --color-base-200: oklch(23% 0.025 240);
+  --color-base-300: oklch(18% 0.02 240);
+  --color-base-content: oklch(95% 0.015 90);
+  /* Warm leaf green primary */
+  --color-primary: oklch(65% 0.14 145);
+  --color-primary-content: oklch(98% 0.01 145);
+  /* Nook's Cranny wood brown secondary */
+  --color-secondary: oklch(55% 0.08 65);
+  --color-secondary-content: oklch(98% 0.01 65);
+  /* Bell coin gold accent */
+  --color-accent: oklch(78% 0.15 85);
+  --color-accent-content: oklch(25% 0.03 85);
+  /* Muted night tones for neutral */
+  --color-neutral: oklch(35% 0.025 240);
+  --color-neutral-content: oklch(92% 0.01 90);
+  /* Sky blue info */
+  --color-info: oklch(65% 0.12 230);
+  --color-info-content: oklch(97% 0.01 230);
+  /* Grass green success */
+  --color-success: oklch(65% 0.14 155);
+  --color-success-content: oklch(98% 0.01 155);
+  /* Amber warning */
+  --color-warning: oklch(75% 0.15 75);
+  --color-warning-content: oklch(25% 0.03 75);
+  /* Soft red error */
+  --color-error: oklch(60% 0.18 25);
+  --color-error-content: oklch(96% 0.01 25);
+  /* Soft, rounded corners throughout */
+  --radius-selector: 0.75rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
   --border: 1.5px;
   --depth: 1;
   --noise: 0;
 }
 
+/* AC Day theme — sky blues, leaf greens, warm golds, wood browns */
 @plugin "../vendor/daisyui-theme" {
   name: "light";
   default: true;
   prefersdark: false;
   color-scheme: "light";
-  --color-base-100: oklch(98% 0 0);
-  --color-base-200: oklch(96% 0.001 286.375);
-  --color-base-300: oklch(92% 0.004 286.32);
-  --color-base-content: oklch(21% 0.006 285.885);
-  --color-primary: oklch(70% 0.213 47.604);
-  --color-primary-content: oklch(98% 0.016 73.684);
-  --color-secondary: oklch(55% 0.027 264.364);
-  --color-secondary-content: oklch(98% 0.002 247.839);
-  --color-accent: oklch(0% 0 0);
-  --color-accent-content: oklch(100% 0 0);
-  --color-neutral: oklch(44% 0.017 285.786);
-  --color-neutral-content: oklch(98% 0 0);
-  --color-info: oklch(62% 0.214 259.815);
-  --color-info-content: oklch(97% 0.014 254.604);
-  --color-success: oklch(70% 0.14 182.503);
-  --color-success-content: oklch(98% 0.014 180.72);
-  --color-warning: oklch(66% 0.179 58.318);
-  --color-warning-content: oklch(98% 0.022 95.277);
-  --color-error: oklch(58% 0.253 17.585);
-  --color-error-content: oklch(96% 0.015 12.422);
-  --radius-selector: 0.25rem;
-  --radius-field: 0.25rem;
-  --radius-box: 0.5rem;
-  --size-selector: 0.21875rem;
-  --size-field: 0.21875rem;
+  /* Warm parchment / sandy backgrounds */
+  --color-base-100: oklch(97% 0.01 90);
+  --color-base-200: oklch(94% 0.015 90);
+  --color-base-300: oklch(90% 0.02 85);
+  --color-base-content: oklch(30% 0.04 55);
+  /* Leaf green primary */
+  --color-primary: oklch(60% 0.16 145);
+  --color-primary-content: oklch(98% 0.01 145);
+  /* Nook's Cranny wood brown secondary */
+  --color-secondary: oklch(50% 0.09 60);
+  --color-secondary-content: oklch(98% 0.01 60);
+  /* Bell coin gold accent */
+  --color-accent: oklch(75% 0.15 85);
+  --color-accent-content: oklch(25% 0.03 85);
+  /* Warm brown neutral */
+  --color-neutral: oklch(42% 0.04 55);
+  --color-neutral-content: oklch(98% 0.005 90);
+  /* AC sky blue info */
+  --color-info: oklch(68% 0.14 230);
+  --color-info-content: oklch(97% 0.01 230);
+  /* Grass green success */
+  --color-success: oklch(65% 0.16 155);
+  --color-success-content: oklch(98% 0.01 155);
+  /* Amber/gold warning */
+  --color-warning: oklch(75% 0.15 75);
+  --color-warning-content: oklch(25% 0.03 75);
+  /* Soft red error */
+  --color-error: oklch(60% 0.18 25);
+  --color-error-content: oklch(96% 0.01 25);
+  /* Soft, rounded corners throughout */
+  --radius-selector: 0.75rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
   --border: 1.5px;
   --depth: 1;
   --noise: 0;
@@ -102,4 +124,24 @@
 /* Make LiveView wrapper divs transparent for layout */
 [data-phx-session], [data-phx-teleported-src] { display: contents }
 
-/* This file is for your main application CSS */
+/* === Creature Crossing Global Styles === */
+
+/* Bubbly sans-serif font */
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap");
+
+body {
+  font-family: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+}
+
+/* Labels centered by default */
+label,
+legend,
+h1, h2, h3, h4, h5, h6 {
+  text-align: center;
+}
+
+/* Lists left-aligned by default */
+ul, ol, dl {
+  text-align: left;
+}
