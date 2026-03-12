@@ -156,22 +156,13 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
       |> Enum.random()
       |> Map.get("name")
 
-    # Random first turn
-    first_turn = Enum.random([:player, :com])
-
     socket =
       assign(socket,
         secret: name,
         com_secret: com_secret,
         phase: :playing
       )
-
-    socket =
-      if first_turn == :com do
-        schedule_com_turn(socket)
-      else
-        start_player_turn(socket)
-      end
+      |> start_player_turn()
 
     {:noreply, socket}
   end
