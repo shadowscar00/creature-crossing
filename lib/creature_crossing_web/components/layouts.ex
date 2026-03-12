@@ -36,6 +36,9 @@ defmodule CreatureCrossingWeb.Layouts do
   def app(assigns) do
     ~H"""
     <header class="navbar bg-primary text-primary-content px-4 sm:px-6 lg:px-8 rounded-b-2xl shadow-md">
+      <div class="flex-none">
+        <CreatureCrossingWeb.Components.Nookphone.nookphone current_path="" />
+      </div>
       <div class="flex-1">
         <a href="/" class="flex items-center gap-2 text-lg font-extrabold tracking-tight">
           Creature Crossing
