@@ -270,7 +270,10 @@ defmodule CreatureCrossingWeb.MatchGameLive do
   # Choose columns so all rows have equal cards and there are at least 2 rows.
   # Find the largest divisor of count that gives >= 2 rows, capped at 10.
   defp grid_cols(count) do
-    max_cols = min(div(count, 2), 10)
+    # All card counts are multiples of 6, so divisors always exist
+    # Level cards: 6,12,18,24,30,36,42,48,54,60
+    # With max 5 cols: 3,4,3,4,5,4,3,4,3,5
+    max_cols = min(div(count, 2), 5)
 
     max_cols..2//-1
     |> Enum.find(fn c -> rem(count, c) == 0 end)
