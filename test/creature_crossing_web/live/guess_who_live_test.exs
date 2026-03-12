@@ -209,7 +209,7 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     assert html =~ "var(--color-warning)"
   end
 
-  test "wrong guess shows modal and does not eliminate", %{conn: conn} do
+  test "wrong guess shows modal and eliminates the guessed villager", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
     secret_name = pick_first_secret(view)
 
@@ -228,9 +228,10 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     html = view |> element(~s(div[phx-value-name="#{target}"][phx-click="make_guess"])) |> render_click()
     assert html =~ "No!"
     assert html =~ "Wrong guess"
+    assert html =~ "villager eliminated"
 
     html = view |> element(~s(button[phx-click="dismiss_modal"])) |> render_click()
-    assert html =~ "24 remaining"
+    assert html =~ "23 remaining"
   end
 
   test "correct guess wins the game", %{conn: conn} do

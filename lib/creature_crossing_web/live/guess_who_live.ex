@@ -180,10 +180,12 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
        )}
     else
       entry = %{question: "Guessed #{name}", answer: false}
+      eliminated = MapSet.put(socket.assigns.eliminated, name)
 
       {:noreply,
        assign(socket,
          history: [entry | socket.assigns.history],
+         eliminated: eliminated,
          guess_mode: false,
          answer_modal: %{question: "Is it #{name}?", answer: false, guess: true}
        )}
@@ -459,7 +461,7 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
           {if @answer_modal.answer, do: "Yes!", else: "No!"}
         </p>
         <p :if={Map.get(@answer_modal, :guess)} style="font-size: 0.875rem; opacity: 0.7; margin-bottom: 1rem;">
-          Wrong guess — no villagers eliminated
+          Wrong guess — villager eliminated
         </p>
         <button phx-click="dismiss_modal" class="btn btn-primary btn-wide">
           Okay
