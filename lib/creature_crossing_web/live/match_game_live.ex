@@ -218,7 +218,7 @@ defmodule CreatureCrossingWeb.MatchGameLive do
       </div>
 
       <%!-- Card grid --%>
-      <div style={"display: grid; grid-template-columns: repeat(#{@cols}, 1fr); gap: 0.375rem; margin-bottom: 1rem;"}>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.375rem; justify-content: center; margin-bottom: 1rem;">
         <.card
           :for={card <- @cards}
           card={card}
@@ -240,7 +240,7 @@ defmodule CreatureCrossingWeb.MatchGameLive do
     <div
       phx-click="flip"
       phx-value-id={@card.id}
-      style={"aspect-ratio: 3/4; border-radius: 0.5rem; cursor: #{if @face_up, do: "default", else: "pointer"}; perspective: 600px;"}
+      style={"width: 5rem; height: 6.5rem; border-radius: 0.5rem; cursor: #{if @face_up, do: "default", else: "pointer"}; perspective: 600px;"}
     >
       <div style={"position: relative; width: 100%; height: 100%; transition: transform 0.4s; transform-style: preserve-3d;#{if @face_up, do: " transform: rotateY(180deg);", else: ""}"}>
         <%!-- Card back --%>
