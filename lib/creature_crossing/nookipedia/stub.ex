@@ -285,7 +285,7 @@ defmodule CreatureCrossing.Nookipedia.Stub do
   defp villager(name, species, personality, gender, bday_month, bday_day, sign, hobby, fav_colors, fav_styles) do
     %{
       "name" => name,
-      "image_url" => "https://dodo.ac/np/images/thumb/#{String.replace(name, " ", "_")}_NH.png/128px-#{String.replace(name, " ", "_")}_NH.png",
+      "image_url" => "/images/critter_placeholder.svg",
       "species" => species,
       "personality" => personality,
       "gender" => gender,
