@@ -58,6 +58,9 @@ config :creature_crossing, CreatureCrossingWeb.Endpoint,
     ]
   ]
 
+# Use stub Nookipedia client in dev (no API key needed)
+config :creature_crossing, :nookipedia_client, CreatureCrossing.Nookipedia.Stub
+
 # Enable dev routes for dashboard and mailbox
 config :creature_crossing, dev_routes: true
 
