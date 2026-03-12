@@ -26,15 +26,15 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
     "fav_styles" => "Is %s one of your villager's favorite styles?"
   }
 
-  @category_labels %{
-    "species" => "Species",
-    "personality" => "Personality",
-    "gender" => "Gender",
-    "sign" => "Zodiac Sign",
-    "hobby" => "Hobby",
-    "fav_colors" => "Favorite Color",
-    "fav_styles" => "Favorite Style"
-  }
+  @category_labels [
+    {"species", "Species"},
+    {"personality", "Personality"},
+    {"gender", "Gender"},
+    {"sign", "Zodiac Sign"},
+    {"hobby", "Hobby"},
+    {"fav_colors", "Favorite Color"},
+    {"fav_styles", "Favorite Style"}
+  ]
 
   @impl true
   def mount(_params, _session, socket) do
@@ -93,7 +93,6 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
 
   @impl true
   def handle_event("pick_secret", %{"name" => name}, socket) do
-    # COM picks a random secret from the remaining board villagers
     com_secret =
       socket.assigns.board
       |> Enum.filter(fn v -> v["name"] != name end)
@@ -101,22 +100,6 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
       |> Map.get("name")
 
     {:noreply, assign(socket, secret: name, com_secret: com_secret, phase: :playing)}
-  end
-
-  @impl true
-  def handle_event("toggle_eliminate", %{"name" => name}, socket) do
-    if name == socket.assigns.secret do
-      {:noreply, socket}
-    else
-      eliminated = socket.assigns.eliminated
-
-      eliminated =
-        if MapSet.member?(eliminated, name),
-          do: MapSet.delete(eliminated, name),
-          else: MapSet.put(eliminated, name)
-
-      {:noreply, assign(socket, eliminated: eliminated)}
-    end
   end
 
   @impl true
@@ -272,31 +255,23 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
     assigns =
       assigns
       |> assign(:remaining, remaining)
-      |> assign(:trait_options, trait_options)
       |> assign(:secret_villager, secret_villager)
       |> assign(:dropdown_values, dropdown_values)
       |> assign(:can_ask, can_ask)
       |> assign(:category_labels, @category_labels)
-      |> assign(:non_eliminated_names, non_eliminated_names(assigns))
 
     ~H"""
     <div style="display: flex; gap: 1rem; padding: 0.25rem 1rem 1rem 1rem;">
-      <%!-- Side panel --%>
+      <%!-- Left panel: questions & history --%>
       <div style="width: 16rem; flex-shrink: 0;">
-        <.side_panel
-          secret_villager={@secret_villager}
-          history={@history}
+        <.question_panel
           category_labels={@category_labels}
-          trait_options={@trait_options}
           question_category={@question_category}
           question_value={@question_value}
           dropdown_values={@dropdown_values}
           can_ask={@can_ask}
           guess_mode={@guess_mode}
-          non_eliminated_names={@non_eliminated_names}
-          board={@board}
-          eliminated={@eliminated}
-          secret={@secret}
+          history={@history}
         />
       </div>
 
@@ -318,13 +293,13 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
         <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.75rem;">
           <div
             :for={villager <- @board}
-            phx-click={if @guess_mode && !MapSet.member?(@eliminated, villager["name"]) && villager["name"] != @secret, do: "make_guess", else: "toggle_eliminate"}
+            phx-click={if @guess_mode && !MapSet.member?(@eliminated, villager["name"]) && villager["name"] != @secret, do: "make_guess", else: nil}
             phx-value-name={villager["name"]}
             style={"border: 2px solid #{cond do
               villager["name"] == @secret -> "var(--color-primary)"
               @guess_mode && !MapSet.member?(@eliminated, villager["name"]) -> "var(--color-warning)"
               true -> "var(--color-neutral)"
-            end}; border-radius: 0.75rem; padding: 0.5rem; cursor: pointer; background: var(--color-base-200); text-align: center; transition: opacity 0.2s;#{if MapSet.member?(@eliminated, villager["name"]), do: " opacity: 0.2;", else: ""}"}
+            end}; border-radius: 0.75rem; padding: 0.5rem; background: var(--color-base-200); text-align: center; transition: opacity 0.2s;#{if MapSet.member?(@eliminated, villager["name"]), do: " opacity: 0.2;", else: ""}#{if @guess_mode && !MapSet.member?(@eliminated, villager["name"]) && villager["name"] != @secret, do: " cursor: pointer;", else: ""}"}
           >
             <img
               src={villager["image_url"]}
@@ -338,6 +313,11 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
             </p>
           </div>
         </div>
+      </div>
+
+      <%!-- Right panel: your villager --%>
+      <div style="width: 14rem; flex-shrink: 0;">
+        <.villager_panel secret_villager={@secret_villager} />
       </div>
     </div>
 
@@ -367,30 +347,9 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
 
   # --- Components ---
 
-  defp side_panel(assigns) do
+  defp question_panel(assigns) do
     ~H"""
     <div style="border: 2px solid var(--color-neutral); border-radius: 0.75rem; background: var(--color-base-200); overflow: hidden;">
-      <%!-- Secret villager card --%>
-      <div style="padding: 0.75rem; border-bottom: 2px solid var(--color-neutral); text-align: center; background: color-mix(in oklch, var(--color-primary) 10%, transparent);">
-        <img
-          src={@secret_villager["image_url"]}
-          alt=""
-          style="width: 3.5rem; height: 3.5rem; object-fit: contain; margin: 0 auto 0.25rem auto; display: block;"
-          loading="lazy"
-          onerror="this.style.display='none'"
-        />
-        <p class="text-primary" style="font-weight: 700; font-size: 0.9rem;">{@secret_villager["name"]}</p>
-        <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.25rem; text-align: left;">
-          <p><strong>Species:</strong> {@secret_villager["species"]}</p>
-          <p><strong>Personality:</strong> {@secret_villager["personality"]}</p>
-          <p><strong>Gender:</strong> {@secret_villager["gender"]}</p>
-          <p><strong>Sign:</strong> {@secret_villager["sign"]}</p>
-          <p><strong>Hobby:</strong> {@secret_villager["hobby"]}</p>
-          <p><strong>Colors:</strong> {Enum.join(@secret_villager["fav_colors"], ", ")}</p>
-          <p><strong>Styles:</strong> {Enum.join(@secret_villager["fav_styles"], ", ")}</p>
-        </div>
-      </div>
-
       <%!-- Question controls --%>
       <div style="padding: 0.5rem; border-bottom: 2px solid var(--color-neutral);">
         <p style="font-weight: 700; font-size: 0.8rem; margin-bottom: 0.375rem;">Ask a Question</p>
@@ -421,10 +380,10 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
           </select>
         </div>
 
-        <%!-- Ask button --%>
+        <%!-- Ask button — always visible, disabled until ready --%>
         <button
-          :if={@can_ask}
           phx-click="ask_question"
+          disabled={!@can_ask}
           class="btn btn-primary btn-sm btn-block"
         >
           Ask!
@@ -445,7 +404,7 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
       </div>
 
       <%!-- Question history --%>
-      <div style="padding: 0.5rem; max-height: 12rem; overflow-y: auto;">
+      <div style="padding: 0.5rem; max-height: 14rem; overflow-y: auto;">
         <p style="font-weight: 700; font-size: 0.8rem; margin-bottom: 0.25rem;">History</p>
         <div :if={@history == []} style="font-size: 0.75rem; opacity: 0.5;">
           No questions yet
@@ -458,6 +417,33 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
           <p style={"font-weight: 700; color: #{if entry.answer, do: "var(--color-success)", else: "var(--color-error)"};"}>
             {if entry.answer, do: "Yes", else: "No"}
           </p>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  defp villager_panel(assigns) do
+    ~H"""
+    <div style="border: 2px solid var(--color-neutral); border-radius: 0.75rem; background: var(--color-base-200); overflow: hidden;">
+      <div style="padding: 0.75rem; text-align: center; background: color-mix(in oklch, var(--color-primary) 10%, transparent);">
+        <p style="font-weight: 700; font-size: 0.8rem; margin-bottom: 0.5rem;">Your Villager</p>
+        <img
+          src={@secret_villager["image_url"]}
+          alt=""
+          style="width: 3.5rem; height: 3.5rem; object-fit: contain; margin: 0 auto 0.25rem auto; display: block;"
+          loading="lazy"
+          onerror="this.style.display='none'"
+        />
+        <p class="text-primary" style="font-weight: 700; font-size: 0.9rem;">{@secret_villager["name"]}</p>
+        <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.25rem; text-align: left;">
+          <p><strong>Species:</strong> {@secret_villager["species"]}</p>
+          <p><strong>Personality:</strong> {@secret_villager["personality"]}</p>
+          <p><strong>Gender:</strong> {@secret_villager["gender"]}</p>
+          <p><strong>Sign:</strong> {@secret_villager["sign"]}</p>
+          <p><strong>Hobby:</strong> {@secret_villager["hobby"]}</p>
+          <p><strong>Colors:</strong> {Enum.join(@secret_villager["fav_colors"], ", ")}</p>
+          <p><strong>Styles:</strong> {Enum.join(@secret_villager["fav_styles"], ", ")}</p>
         </div>
       </div>
     </div>
@@ -481,11 +467,5 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
       </div>
     </div>
     """
-  end
-
-  defp non_eliminated_names(assigns) do
-    assigns.board
-    |> Enum.reject(fn v -> MapSet.member?(assigns.eliminated, v["name"]) || v["name"] == assigns.secret end)
-    |> Enum.map(& &1["name"])
   end
 end

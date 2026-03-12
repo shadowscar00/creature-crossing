@@ -42,7 +42,8 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     pick_first_secret(view)
 
     html = render(view)
-    matches = Regex.scan(~r/phx-click="toggle_eliminate"/, html)
+    # Count villager cards by their phx-value-name attributes in the board grid
+    matches = Regex.scan(~r/phx-value-name="[^"]+"/, html)
     assert length(matches) == 24
   end
 
@@ -51,37 +52,6 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     pick_first_secret(view)
 
     html = render(view)
-    assert html =~ "24 remaining"
-  end
-
-  test "clicking a villager eliminates them", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/guess-who")
-    secret_name = pick_first_secret(view)
-
-    html = render(view)
-    target = find_non_secret_villager(html, secret_name)
-
-    html = view |> element(~s(div[phx-value-name="#{target}"][phx-click="toggle_eliminate"])) |> render_click()
-    assert html =~ "23 remaining"
-  end
-
-  test "clicking an eliminated villager un-eliminates them", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/guess-who")
-    secret_name = pick_first_secret(view)
-
-    html = render(view)
-    target = find_non_secret_villager(html, secret_name)
-
-    view |> element(~s(div[phx-value-name="#{target}"][phx-click="toggle_eliminate"])) |> render_click()
-    html = view |> element(~s(div[phx-value-name="#{target}"][phx-click="toggle_eliminate"])) |> render_click()
-    assert html =~ "24 remaining"
-  end
-
-  test "cannot eliminate the secret villager", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/guess-who")
-    secret_name = pick_first_secret(view)
-
-    html = view |> element(~s(div[phx-value-name="#{secret_name}"][phx-click="toggle_eliminate"])) |> render_click()
     assert html =~ "24 remaining"
   end
 
@@ -102,13 +72,14 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     assert html =~ secret_name
   end
 
-  # --- Side panel tests ---
+  # --- Side panels tests ---
 
-  test "side panel shows secret villager traits", %{conn: conn} do
+  test "right panel shows secret villager traits", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
     pick_first_secret(view)
 
     html = render(view)
+    assert html =~ "Your Villager"
     assert html =~ "Species:"
     assert html =~ "Personality:"
     assert html =~ "Gender:"
@@ -118,12 +89,14 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     assert html =~ "Styles:"
   end
 
-  test "side panel shows empty history initially", %{conn: conn} do
+  test "left panel shows question controls and empty history", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
     pick_first_secret(view)
 
     html = render(view)
+    assert html =~ "Ask a Question"
     assert html =~ "No questions yet"
+    assert html =~ "Ask!"
   end
 
   # --- Question system tests ---
@@ -152,17 +125,25 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     assert html =~ "Female"
   end
 
+  test "ask button is disabled until category and value selected", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/guess-who")
+    pick_first_secret(view)
+
+    html = render(view)
+    # Ask button should be present but disabled
+    assert html =~ "Ask!"
+    assert html =~ "disabled"
+  end
+
   test "asking a question shows answer modal", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
     pick_first_secret(view)
 
-    # Select gender category and a value
     view |> element(~s(button[phx-value-category="gender"])) |> render_click()
     view |> element("select") |> render_change(%{"value" => "Male"})
 
     html = view |> element(~s(button[phx-click="ask_question"])) |> render_click()
 
-    # Modal should appear with Yes or No
     assert html =~ "Male"
     assert html =~ ~r/(Yes!|No!)/
     assert html =~ "Okay"
@@ -207,14 +188,13 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     refute html =~ "24 remaining"
   end
 
-  test "dropdown values come from board villagers only", %{conn: conn} do
+  test "board villagers are not manually clickable for elimination", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
     pick_first_secret(view)
 
-    html = view |> element(~s(button[phx-value-category="hobby"])) |> render_click()
-
-    # Should have options from our stub data
-    assert html =~ "Nature" or html =~ "Play" or html =~ "Music"
+    html = render(view)
+    # No toggle_eliminate events should be on the board
+    refute html =~ "toggle_eliminate"
   end
 
   # --- Guess mode tests ---
@@ -233,11 +213,9 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
     secret_name = pick_first_secret(view)
 
-    # Get COM's secret to avoid guessing it
     state = :sys.get_state(view.pid)
     com_secret = state.socket.assigns.com_secret
 
-    # Enter guess mode
     view |> element("button", "Make a Guess") |> render_click()
 
     # Find a villager that is neither player's nor COM's secret
@@ -251,7 +229,6 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     assert html =~ "No!"
     assert html =~ "Wrong guess"
 
-    # Dismiss and check nothing eliminated
     html = view |> element(~s(button[phx-click="dismiss_modal"])) |> render_click()
     assert html =~ "24 remaining"
   end
@@ -260,11 +237,9 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     {:ok, view, _html} = live(conn, ~p"/guess-who")
     pick_first_secret(view)
 
-    # Get the COM's secret from the process state
     state = :sys.get_state(view.pid)
     com_secret = state.socket.assigns.com_secret
 
-    # Enter guess mode and guess correctly
     view |> element("button", "Make a Guess") |> render_click()
     html = view |> element(~s(div[phx-value-name="#{com_secret}"][phx-click="make_guess"])) |> render_click()
 
@@ -294,11 +269,5 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     [_, name] = Regex.run(~r/phx-click="pick_secret"\s+phx-value-name="([^"]+)"/, html)
     view |> element(~s(div[phx-value-name="#{name}"][phx-click="pick_secret"])) |> render_click()
     name
-  end
-
-  defp find_non_secret_villager(html, secret_name) do
-    Regex.scan(~r/phx-click="toggle_eliminate"\s+phx-value-name="([^"]+)"/, html)
-    |> Enum.map(fn [_, n] -> n end)
-    |> Enum.find(fn n -> n != secret_name end)
   end
 end
