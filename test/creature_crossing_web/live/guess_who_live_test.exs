@@ -251,7 +251,8 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     send(view.pid, :com_turn)
 
     html = render(view)
-    assert html =~ "no cheating &gt;:("
+    assert html =~ "no cheating"
+    assert html =~ "Answer Honestly"
   end
 
   # --- Guess mode tests ---

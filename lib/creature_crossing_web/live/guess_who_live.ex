@@ -137,7 +137,7 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
 
   defp com_should_guess?(socket) do
     remaining_count = length(com_remaining(socket))
-    remaining_count <= 2
+    remaining_count <= 3
   end
 
   defp com_make_guess(socket) do
@@ -295,6 +295,15 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
       # Honest answer — COM processes it
       {:noreply, process_com_answer(socket, correct_answer)}
     end
+  end
+
+  # Auto-honest answer after being caught lying
+  @impl true
+  def handle_event("answer_com_honest", _params, socket) do
+    %{com_question_modal: q, secret: secret_name, board: board} = socket.assigns
+    secret_villager = Enum.find(board, fn v -> v["name"] == secret_name end)
+    correct_answer = villager_matches_trait?(secret_villager, q.category, q.value)
+    {:noreply, process_com_answer(socket, correct_answer)}
   end
 
   @impl true
@@ -741,13 +750,19 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
         <p style="font-weight: 700; font-size: 0.8rem; opacity: 0.6; margin-bottom: 0.5rem;">COM asks:</p>
         <p style="font-size: 1.1rem; margin-bottom: 1rem;">{@com_question_modal.question}</p>
 
-        <%!-- Before answering: show Yes/No buttons --%>
-        <div :if={!@answered && !@is_guess} style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1rem;">
-          <button phx-click="answer_com" phx-value-answer="yes" class="btn btn-success btn-wide">
+        <%!-- Before answering: show Yes/No buttons (or auto-answer if caught lying before) --%>
+        <div :if={!@answered && !@is_guess && !@liar_caught} style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1rem; flex-wrap: wrap;">
+          <button phx-click="answer_com" phx-value-answer="yes" class="btn btn-success" style="min-width: 6rem;">
             Yes
           </button>
-          <button phx-click="answer_com" phx-value-answer="no" class="btn btn-error btn-wide">
-            {if @liar_caught, do: "no cheating >:(", else: "No"}
+          <button phx-click="answer_com" phx-value-answer="no" class="btn btn-error" style="min-width: 6rem;">
+            No
+          </button>
+        </div>
+        <div :if={!@answered && !@is_guess && @liar_caught} style="text-align: center; margin-bottom: 1rem;">
+          <p style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.5rem;">no cheating &gt;:(</p>
+          <button phx-click="answer_com_honest" class="btn btn-primary" style="min-width: 8rem;">
+            Answer Honestly
           </button>
         </div>
 
