@@ -56,7 +56,6 @@ defmodule CreatureCrossingWeb.Components.Nookphone do
         <%!-- Phone modal — stop click propagation so clicking inside doesn't close --%>
         <div
           id="nookphone-modal"
-          phx-click={%JS{}}
           onclick="event.stopPropagation()"
           class="relative bg-accent/90 rounded-3xl shadow-2xl p-6 w-56 h-96
                  border-[6px] border-neutral/80 transform transition-all duration-300

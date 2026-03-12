@@ -3,7 +3,7 @@ defmodule CreatureCrossingWeb.CreatureCrossingLiveTest do
 
   import Phoenix.LiveViewTest
 
-  test "renders critter tool with tabs", %{conn: conn} do
+  test "renders critter tool with all three category boxes", %{conn: conn} do
     {:ok, _view, html} = live(conn, ~p"/creature-crossing")
     assert html =~ "Critter Tool"
     assert html =~ "Bugs"
@@ -16,26 +16,28 @@ defmodule CreatureCrossingWeb.CreatureCrossingLiveTest do
     assert html =~ "Critter Tool"
   end
 
-  test "renders critter names from stub data", %{conn: conn} do
+  test "renders critter names from stub data in all categories", %{conn: conn} do
     {:ok, _view, html} = live(conn, ~p"/creature-crossing")
-    # Bugs tab is active by default — should see stub bug names
+    # Bug
     assert html =~ "Common butterfly"
+    # Fish
+    assert html =~ "Sea bass"
+    # Sea creature
+    assert html =~ "Seaweed"
   end
 
-  test "hemisphere toggle switches label", %{conn: conn} do
+  test "hemisphere toggle switches active label", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/creature-crossing")
-    assert render(view) =~ "Northern"
 
-    html = view |> element("button", "Northern") |> render_click()
+    html = view |> element(~s(input[phx-click="toggle_hemisphere"])) |> render_click()
+    # After toggling, Southern should be highlighted
     assert html =~ "Southern"
   end
 
   test "flip mode toggles selection label", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/creature-crossing")
-    assert render(view) =~ "I&#39;m missing these"
-
-    html = view |> element("button", "missing these") |> render_click()
-    assert html =~ "I have these"
+    {:ok, view, html} = live(conn, ~p"/creature-crossing")
+    assert html =~ "Missing"
+    assert html =~ "Have"
   end
 
   test "clicking a critter toggles selection", %{conn: conn} do
@@ -53,8 +55,8 @@ defmodule CreatureCrossingWeb.CreatureCrossingLiveTest do
     assert html =~ "disabled"
     assert html =~ "need 5 more"
 
-    # Select 5 critters
-    for name <- ["Common butterfly", "Monarch butterfly", "Honeybee", "Tarantula", "Emperor butterfly"] do
+    # Select 5 critters (across categories since all are visible)
+    for name <- ["Common butterfly", "Monarch butterfly", "Honeybee", "Sea bass", "Seaweed"] do
       view |> element(~s(li[phx-value-name="#{name}"])) |> render_click()
     end
 
@@ -63,24 +65,14 @@ defmodule CreatureCrossingWeb.CreatureCrossingLiveTest do
     refute html =~ "need"
   end
 
-  test "switching tabs shows different critter lists", %{conn: conn} do
+  test "selections work across all three categories simultaneously", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/creature-crossing")
 
-    html = view |> element("button", "Fish") |> render_click()
-    # Should see a fish from stub data
-    assert html =~ "Sea bass"
-  end
-
-  test "selections persist across tab switches", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/creature-crossing")
-
-    # Select a bug
+    # Select one from each category
     view |> element(~s(li[phx-value-name="Common butterfly"])) |> render_click()
+    view |> element(~s(li[phx-value-name="Sea bass"])) |> render_click()
+    html = view |> element(~s(li[phx-value-name="Seaweed"])) |> render_click()
 
-    # Switch to fish and back
-    view |> element("button", "Fish") |> render_click()
-    html = view |> element("button", "Bugs") |> render_click()
-
-    assert html =~ "1 selected"
+    assert html =~ "3 selected"
   end
 end

@@ -27,8 +27,7 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
        sea: sea,
        selected: MapSet.new(),
        hemisphere: "north",
-       mode: "missing",
-       active_tab: "bugs"
+       mode: "missing"
      )}
   end
 
@@ -57,11 +56,6 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
   end
 
   @impl true
-  def handle_event("switch_tab", %{"tab" => tab}, socket) do
-    {:noreply, assign(socket, active_tab: tab)}
-  end
-
-  @impl true
   def handle_event("calculate", _params, socket) do
     # Will be implemented in 2-2
     {:noreply, socket}
@@ -74,122 +68,111 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
     assigns = assign(assigns, :can_calculate, assigns.selection_count >= @min_selection)
 
     ~H"""
-    <div class="max-w-2xl mx-auto px-4 py-6">
-      <h1 class="text-3xl font-extrabold tracking-tight text-center mb-6">
-        Critter Tool
+    <div class="max-w-6xl mx-auto px-4 py-8">
+      <h1 style="font-size: 2.5rem;" class="font-extrabold tracking-tight text-center mb-8">
+        Critter Calculator
       </h1>
 
       <%!-- Controls row --%>
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 6rem; margin-bottom: 2rem;">
         <%!-- Hemisphere toggle --%>
-        <button
-          phx-click="toggle_hemisphere"
-          class="btn btn-sm btn-outline"
-        >
-          {if @hemisphere == "north", do: "🌐 Northern", else: "🌐 Southern"}
-        </button>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span class="hero-globe-americas" style="width: 1.25rem; height: 1.25rem; opacity: 0.7;"></span>
+          <span class={"text-sm font-semibold #{if @hemisphere == "north", do: "text-primary", else: "text-base-content/50"}"}>
+            Northern
+          </span>
+          <input
+            type="checkbox"
+            class="toggle toggle-primary toggle-sm"
+            phx-click="toggle_hemisphere"
+            checked={@hemisphere == "south"}
+          />
+          <span class={"text-sm font-semibold #{if @hemisphere == "south", do: "text-primary", else: "text-base-content/50"}"}>
+            Southern
+          </span>
+        </div>
 
-        <%!-- Mode flip button --%>
-        <button
-          phx-click="flip_mode"
-          class="btn btn-sm btn-outline"
-        >
-          {if @mode == "missing", do: "🔄 I'm missing these", else: "🔄 I have these"}
-        </button>
+        <%!-- Mode toggle --%>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span class={"text-sm font-semibold #{if @mode == "missing", do: "text-primary", else: "text-base-content/50"}"}>
+            Missing
+          </span>
+          <input
+            type="checkbox"
+            class="toggle toggle-primary toggle-sm"
+            phx-click="flip_mode"
+            checked={@mode == "have"}
+          />
+          <span class={"text-sm font-semibold #{if @mode == "have", do: "text-primary", else: "text-base-content/50"}"}>
+            Have
+          </span>
+        </div>
       </div>
 
-      <%!-- Tab buttons --%>
-      <div role="tablist" class="tabs tabs-boxed mb-4">
-        <button
-          role="tab"
-          phx-click="switch_tab"
-          phx-value-tab="bugs"
-          class={"tab #{if @active_tab == "bugs", do: "tab-active"}"}
-        >
-          Bugs ({length(@bugs)})
-        </button>
-        <button
-          role="tab"
-          phx-click="switch_tab"
-          phx-value-tab="fish"
-          class={"tab #{if @active_tab == "fish", do: "tab-active"}"}
-        >
-          Fish ({length(@fish)})
-        </button>
-        <button
-          role="tab"
-          phx-click="switch_tab"
-          phx-value-tab="sea"
-          class={"tab #{if @active_tab == "sea", do: "tab-active"}"}
-        >
-          Diving ({length(@sea)})
-        </button>
+      <%!-- Three category boxes side by side --%>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <.critter_box title="Bugs" critters={@bugs} selected={@selected} />
+        <.critter_box title="Fish" critters={@fish} selected={@selected} />
+        <.critter_box title="Diving" critters={@sea} selected={@selected} />
       </div>
 
-      <%!-- Critter list --%>
-      <div class="h-96 overflow-y-auto border border-base-300 rounded-xl bg-base-100 p-2">
-        <.critter_list
-          critters={active_critters(assigns)}
-          selected={@selected}
-        />
-      </div>
-
-      <%!-- Selection count and calculate button --%>
-      <div class="flex items-center justify-between mt-4">
-        <span class="text-sm text-base-content/70">
+      <%!-- Calculate button --%>
+      <div style="text-align: center; padding-top: 1rem;">
+        <button
+          phx-click="calculate"
+          disabled={!@can_calculate}
+          class="btn btn-primary btn-lg btn-wide text-lg"
+        >
+          Calculate
+        </button>
+        <p style="margin-top: 0.75rem;" class="text-sm text-base-content/70">
           {@selection_count} selected
           {if @selection_count < @min_selection,
             do: " (need #{@min_selection - @selection_count} more)",
             else: ""}
-        </span>
-        <button
-          phx-click="calculate"
-          disabled={!@can_calculate}
-          class="btn btn-primary"
-        >
-          Calculate
-        </button>
+        </p>
       </div>
     </div>
     """
   end
 
-  defp critter_list(assigns) do
+  defp critter_box(assigns) do
     ~H"""
-    <ul class="space-y-1">
-      <li
-        :for={critter <- @critters}
-        phx-click="toggle_critter"
-        phx-value-name={critter["name"]}
-        class={[
-          "flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors",
-          if(MapSet.member?(@selected, critter["name"]),
-            do: "bg-primary/20 ring-1 ring-primary",
-            else: "hover:bg-base-200"
-          )
-        ]}
-      >
-        <img
-          src={critter["image_url"]}
-          alt={critter["name"]}
-          class="w-10 h-10 object-contain"
-          loading="lazy"
-        />
-        <span class="font-semibold text-sm">{critter["name"]}</span>
-        <span
-          :if={MapSet.member?(@selected, critter["name"])}
-          class="ml-auto text-primary font-bold"
+    <div style={"border: 2px solid var(--color-neutral); border-radius: 0.75rem; overflow: hidden; display: flex; flex-direction: column; background: var(--color-base-200);"}>
+      <h2 style="text-align: center; font-weight: 700; font-size: 0.95rem; padding: 0.6rem 0; background: var(--color-base-300); border-bottom: 2px solid var(--color-neutral);">
+        {@title} ({length(@critters)})
+      </h2>
+      <ul style="overflow-y: auto; height: 22rem;">
+        <li
+          :for={critter <- @critters}
+          phx-click="toggle_critter"
+          phx-value-name={critter["name"]}
+          style={"display: flex; align-items: center; padding: 0.5rem 0.75rem; cursor: pointer; border-bottom: 1px solid color-mix(in oklch, var(--color-neutral) 25%, transparent);#{if MapSet.member?(@selected, critter["name"]), do: " background: color-mix(in oklch, var(--color-primary) 20%, transparent);", else: ""}"}
         >
-          ✓
-        </span>
-      </li>
-    </ul>
+          <img
+            src={critter["image_url"]}
+            alt=""
+            style="width: 2.25rem; height: 2.25rem; object-fit: contain; flex-shrink: 0;"
+            loading="lazy"
+            onerror="this.style.display='none'"
+          />
+          <span style="flex: 1; text-align: center; font-weight: 600; font-size: 0.875rem;">{critter["name"]}</span>
+          <span
+            :if={MapSet.member?(@selected, critter["name"])}
+            class="text-primary"
+            style="font-weight: 700; flex-shrink: 0;"
+          >
+            ✓
+          </span>
+          <span
+            :if={!MapSet.member?(@selected, critter["name"])}
+            style="width: 1rem; flex-shrink: 0;"
+          />
+        </li>
+      </ul>
+    </div>
     """
   end
-
-  defp active_critters(%{active_tab: "bugs"} = assigns), do: assigns.bugs
-  defp active_critters(%{active_tab: "fish"} = assigns), do: assigns.fish
-  defp active_critters(%{active_tab: "sea"} = assigns), do: assigns.sea
 
   defp sort_by_name(critters) do
     Enum.sort_by(critters, & &1["name"])
