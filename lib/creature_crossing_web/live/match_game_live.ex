@@ -210,7 +210,7 @@ defmodule CreatureCrossingWeb.MatchGameLive do
           Next Level
         </button>
         <div :if={@level == @max_level}>
-          <p style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">You beat all 10 levels!</p>
+          <p style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">You beat all 5 levels!</p>
           <button phx-click="back_to_level_1" class="btn btn-primary btn-lg">
             Play Again
           </button>
@@ -270,13 +270,10 @@ defmodule CreatureCrossingWeb.MatchGameLive do
   # Choose columns so all rows have equal cards and there are at least 2 rows.
   # Find the largest divisor of count that gives >= 2 rows, capped at 10.
   defp grid_cols(count) do
-    # All card counts are multiples of 6, so divisors always exist
-    # Level cards: 6,12,18,24,30,36,42,48,54,60
-    # With max 5 cols: 3,4,3,4,5,4,3,4,3,5
-    max_cols = min(div(count, 2), 6)
-
-    max_cols..2//-1
-    |> Enum.find(fn c -> rem(count, c) == 0 end)
-    |> Kernel.||(max_cols)
+    # Level cards: 6→3x2, 12→4x3, 18→6x3, 24→6x4, 30→6x5
+    # Find smallest divisor between 3-6 that gives at least 2 rows
+    3..6
+    |> Enum.find(fn c -> rem(count, c) == 0 && div(count, c) >= 2 end)
+    |> Kernel.||(3)
   end
 end
