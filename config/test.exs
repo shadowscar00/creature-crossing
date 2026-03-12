@@ -7,6 +7,9 @@ config :creature_crossing, CreatureCrossingWeb.Endpoint,
   secret_key_base: "y1rVSR1YEXGqpGLx2QAOlKkqP/p6iwZ6GFisvwIpLzBjOvFE+lSnA4Yxob81/b3U",
   server: false
 
+# Use stub Nookipedia client in test
+config :creature_crossing, :nookipedia_client, CreatureCrossing.Nookipedia.Stub
+
 # Print only warnings and errors during test
 config :logger, level: :warning
 
