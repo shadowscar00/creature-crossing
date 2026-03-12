@@ -27,7 +27,8 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
        sea: sea,
        selected: MapSet.new(),
        hemisphere: "north",
-       mode: "missing"
+       mode: "missing",
+       result: nil
      )}
   end
 
@@ -57,8 +58,17 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
 
   @impl true
   def handle_event("calculate", _params, socket) do
-    # Will be implemented in 2-2
-    {:noreply, socket}
+    %{selected: selected, bugs: bugs, fish: fish, sea: sea, hemisphere: hemisphere} =
+      socket.assigns
+
+    all_critters = bugs ++ fish ++ sea
+
+    selected_critters =
+      Enum.filter(all_critters, fn c -> MapSet.member?(selected, c["name"]) end)
+
+    result = CreatureCrossing.Overlap.calculate(selected_critters, hemisphere)
+
+    {:noreply, assign(socket, result: result)}
   end
 
   @impl true
