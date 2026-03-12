@@ -11,7 +11,7 @@ defmodule CreatureCrossingWeb.MatchGameLive do
   alias CreatureCrossing.Nookipedia
 
   @cards_per_level 6
-  @max_level 10
+  @max_level 5
   @flip_back_delay 1000
 
   @card_backs [

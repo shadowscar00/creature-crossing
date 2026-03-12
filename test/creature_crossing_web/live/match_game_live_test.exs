@@ -6,7 +6,7 @@ defmodule CreatureCrossingWeb.MatchGameLiveTest do
   test "renders match game at level 1", %{conn: conn} do
     {:ok, _view, html} = live(conn, ~p"/match-game")
     assert html =~ "Match Game"
-    assert html =~ "Level 1/10"
+    assert html =~ "Level 1/5"
   end
 
   test "level 1 has 6 cards (3 pairs)", %{conn: conn} do
@@ -126,7 +126,7 @@ defmodule CreatureCrossingWeb.MatchGameLiveTest do
     complete_current_level(view)
 
     html = view |> element("button", "Next Level") |> render_click()
-    assert html =~ "Level 2/10"
+    assert html =~ "Level 2/5"
 
     # Level 2 should have 12 cards
     matches = Regex.scan(~r/phx-click="flip"/, html)
@@ -141,7 +141,7 @@ defmodule CreatureCrossingWeb.MatchGameLiveTest do
     view |> element("button", "Next Level") |> render_click()
 
     html = view |> element("button", "Restart") |> render_click()
-    assert html =~ "Level 1/10"
+    assert html =~ "Level 1/5"
   end
 
   test "cannot click already matched card", %{conn: conn} do
