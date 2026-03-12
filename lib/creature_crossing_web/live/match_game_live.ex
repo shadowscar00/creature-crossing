@@ -218,7 +218,7 @@ defmodule CreatureCrossingWeb.MatchGameLive do
       </div>
 
       <%!-- Card grid --%>
-      <div style="display: flex; flex-wrap: wrap; gap: 0.375rem; justify-content: center; margin-bottom: 1rem;">
+      <div style={"display: grid; grid-template-columns: repeat(#{@cols}, 5rem); gap: 0.375rem; justify-content: center; margin-bottom: 1rem;"}>
         <.card
           :for={card <- @cards}
           card={card}
@@ -267,11 +267,13 @@ defmodule CreatureCrossingWeb.MatchGameLive do
     """
   end
 
-  # Choose grid columns based on card count
-  defp grid_cols(count) when count <= 6, do: 3
-  defp grid_cols(count) when count <= 12, do: 4
-  defp grid_cols(count) when count <= 18, do: 6
-  defp grid_cols(count) when count <= 30, do: 6
-  defp grid_cols(count) when count <= 48, do: 8
-  defp grid_cols(_count), do: 10
+  # Choose columns so all rows have equal cards and there are at least 2 rows.
+  # Find the largest divisor of count that gives >= 2 rows, capped at 10.
+  defp grid_cols(count) do
+    max_cols = min(div(count, 2), 10)
+
+    max_cols..2//-1
+    |> Enum.find(fn c -> rem(count, c) == 0 end)
+    |> Kernel.||(max_cols)
+  end
 end
