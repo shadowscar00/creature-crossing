@@ -116,16 +116,16 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
 
   defp render_selection(assigns) do
     ~H"""
-    <div class="max-w-6xl mx-auto px-4 py-8">
-      <h1 style="font-size: 2.5rem;" class="font-extrabold tracking-tight text-center mb-8">
+    <div class="max-w-6xl mx-auto px-4" style="padding-top: 0.5rem;">
+      <h1 style="font-size: 2.5rem; margin-bottom: 0.25rem;" class="font-extrabold tracking-tight text-center">
         Critter Calculator
       </h1>
 
       <%!-- Controls row --%>
-      <div style="display: flex; align-items: center; justify-content: center; gap: 6rem; margin-bottom: 2rem;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 6rem; margin-bottom: 0.5rem;">
         <%!-- Hemisphere toggle --%>
         <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <span class="hero-globe-americas" style="width: 1.25rem; height: 1.25rem; opacity: 0.7;"></span>
+          <span :if={@hemisphere == "north"} class="hero-globe-americas" style="width: 1.25rem; height: 1.25rem; opacity: 0.7;"></span>
           <span class={"text-sm font-semibold #{if @hemisphere == "north", do: "text-primary", else: "text-base-content/50"}"}>
             Northern
           </span>
@@ -138,10 +138,12 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
           <span class={"text-sm font-semibold #{if @hemisphere == "south", do: "text-primary", else: "text-base-content/50"}"}>
             Southern
           </span>
+          <span :if={@hemisphere == "south"} class="hero-globe-americas" style="width: 1.25rem; height: 1.25rem; opacity: 0.7;"></span>
         </div>
 
         <%!-- Mode toggle --%>
         <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span :if={@mode == "missing"} class="hero-book-open" style="width: 1.25rem; height: 1.25rem; opacity: 0.7;"></span>
           <span class={"text-sm font-semibold #{if @mode == "missing", do: "text-primary", else: "text-base-content/50"}"}>
             Missing
           </span>
@@ -154,18 +156,12 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
           <span class={"text-sm font-semibold #{if @mode == "have", do: "text-primary", else: "text-base-content/50"}"}>
             Have
           </span>
+          <span :if={@mode == "have"} class="hero-book-open" style="width: 1.25rem; height: 1.25rem; opacity: 0.7;"></span>
         </div>
       </div>
 
-      <%!-- Three category boxes side by side --%>
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-        <.critter_box title="Bugs" critters={@bugs} selected={@selected} />
-        <.critter_box title="Fish" critters={@fish} selected={@selected} />
-        <.critter_box title="Diving" critters={@sea} selected={@selected} />
-      </div>
-
       <%!-- Calculate button --%>
-      <div style="text-align: center; padding-top: 1rem;">
+      <div style="text-align: center; margin-bottom: 0.5rem;">
         <button
           phx-click="calculate"
           disabled={!@can_calculate}
@@ -173,12 +169,19 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
         >
           Calculate
         </button>
-        <p style="margin-top: 0.75rem;" class="text-sm text-base-content/70">
+        <p style="margin-top: 0.25rem;" class="text-sm text-base-content/70">
           {@selection_count} selected
           {if @selection_count < @min_selection,
             do: " (need #{@min_selection - @selection_count} more)",
             else: ""}
         </p>
+      </div>
+
+      <%!-- Three category boxes side by side --%>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <.critter_box title="Bugs" critters={@bugs} selected={@selected} />
+        <.critter_box title="Fish" critters={@fish} selected={@selected} />
+        <.critter_box title="Diving" critters={@sea} selected={@selected} />
       </div>
     </div>
     """
@@ -202,18 +205,18 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
       )
 
     ~H"""
-    <div class="max-w-5xl mx-auto px-4 py-8">
+    <div class="max-w-5xl mx-auto px-4" style="padding-top: 0.25rem;">
       <%!-- Back button --%>
-      <div style="margin-bottom: 1.5rem;">
-        <button phx-click="back_to_selection" class="btn btn-sm btn-ghost">
-          <span class="hero-arrow-left" style="width: 1rem; height: 1rem;"></span>
+      <div style="margin: 0; padding: 0; line-height: 1;">
+        <button phx-click="back_to_selection" class="btn btn-xs btn-ghost" style="padding: 0.125rem 0.5rem;">
+          <span class="hero-arrow-left" style="width: 0.875rem; height: 0.875rem;"></span>
           Back to selection
         </button>
       </div>
 
       <%!-- Result header --%>
-      <div style="text-align: center; margin-bottom: 2rem;">
-        <h1 style="font-size: 2.5rem;" class="font-extrabold tracking-tight mb-2">
+      <div style="text-align: center; margin-bottom: 0.75rem; margin-top: 0; padding-top: 0;">
+        <h1 style="font-size: 2.5rem; margin: 0;" class="font-extrabold tracking-tight">
           {if @result.month, do: @result.month, else: "No Overlap"}
         </h1>
         <p :if={@result.month} style="font-size: 1.25rem;" class="text-primary font-bold">
@@ -222,6 +225,20 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
         <p style="margin-top: 0.5rem;" class="text-base-content/70">
           {@result.critter_count} critters catchable
           {if @caught_count > 0, do: " (#{@caught_count} caught)", else: ""}
+        </p>
+      </div>
+
+      <%!-- Recalculate section --%>
+      <div :if={@caught_count >= 3} style="text-align: center; margin-bottom: 1.5rem;">
+        <button
+          :if={@can_recalculate}
+          phx-click="recalculate"
+          class="btn btn-primary btn-lg btn-wide text-lg"
+        >
+          Recalculate!
+        </button>
+        <p :if={!@can_recalculate} class="text-base-content/70">
+          Not enough critters remaining to recalculate (need at least 5)
         </p>
       </div>
 
@@ -241,20 +258,6 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
           hemisphere={@hemisphere}
           result={@result}
         />
-      </div>
-
-      <%!-- Recalculate section --%>
-      <div :if={@caught_count >= 3} style="text-align: center; padding-top: 1rem;">
-        <button
-          :if={@can_recalculate}
-          phx-click="recalculate"
-          class="btn btn-primary btn-lg btn-wide text-lg"
-        >
-          Recalculate!
-        </button>
-        <p :if={!@can_recalculate} class="text-base-content/70">
-          Not enough critters remaining to recalculate (need at least 5)
-        </p>
       </div>
     </div>
     """
@@ -298,21 +301,16 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
     """
   end
 
+  @month_name_to_num %{
+    "January" => 1, "February" => 2, "March" => 3, "April" => 4,
+    "May" => 5, "June" => 6, "July" => 7, "August" => 8,
+    "September" => 9, "October" => 10, "November" => 11, "December" => 12
+  }
+
   defp result_card(assigns) do
     time_str =
       if assigns.result.month do
-        month_num =
-          assigns.result.month
-          |> then(fn name ->
-            Enum.find(1..12, fn m ->
-              Map.get(
-                %{1 => "January", 2 => "February", 3 => "March", 4 => "April",
-                  5 => "May", 6 => "June", 7 => "July", 8 => "August",
-                  9 => "September", 10 => "October", 11 => "November", 12 => "December"},
-                m
-              ) == name
-            end)
-          end)
+        month_num = @month_name_to_num[assigns.result.month]
 
         get_in(assigns.critter, [assigns.hemisphere, "times_by_month", to_string(month_num)]) ||
           "All day"
@@ -320,34 +318,40 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
         "—"
       end
 
-    assigns = assign(assigns, :time_str, time_str)
+    critter_type = assigns.critter["critter_type"]
+
+    assigns =
+      assigns
+      |> assign(:time_str, time_str)
+      |> assign(:weather, assigns.critter["weather"] || "Any")
+      |> assign(:shadow_size, if(critter_type == "bug", do: "N/A", else: assigns.critter["shadow_size"] || "N/A"))
+      |> assign(:speed, if(critter_type == "sea", do: assigns.critter["speed"] || "N/A", else: "N/A"))
 
     ~H"""
     <div
       phx-click="toggle_caught"
       phx-value-name={@critter["name"]}
-      style={"border: 2px solid var(--color-neutral); border-radius: 0.75rem; padding: 1rem; cursor: pointer; text-align: center; background: var(--color-base-200); transition: opacity 0.2s;#{if @caught, do: " opacity: 0.4;", else: ""}"}
+      style={"border: 2px solid var(--color-neutral); border-radius: 0.75rem; padding: 1rem; cursor: pointer; background: var(--color-base-200); transition: opacity 0.2s;#{if @caught, do: " opacity: 0.4;", else: ""}"}
     >
       <img
         src={@critter["image_url"]}
         alt=""
-        style="width: 4rem; height: 4rem; object-fit: contain; margin: 0 auto 0.5rem auto;"
+        style="width: 4rem; height: 4rem; object-fit: contain; margin: 0 auto 0.5rem auto; display: block;"
         loading="lazy"
         onerror="this.style.display='none'"
       />
-      <p style="font-weight: 700; font-size: 0.875rem; margin-bottom: 0.25rem;">
+      <p style="font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; text-align: center;">
         {@critter["name"]}
       </p>
-      <p style="font-size: 0.75rem; opacity: 0.7;">
-        {@critter["location"]}
-      </p>
-      <p style="font-size: 0.75rem; opacity: 0.7;">
-        {@critter["rarity"]}
-      </p>
-      <p style="font-size: 0.75rem; opacity: 0.7;">
-        {@time_str}
-      </p>
-      <p :if={@caught} class="text-primary" style="font-weight: 700; margin-top: 0.25rem;">
+      <div style="font-size: 0.75rem; opacity: 0.7; text-align: left;">
+        <p><strong>Location:</strong> {@critter["location"]}</p>
+        <p><strong>Rarity:</strong> {@critter["rarity"]}</p>
+        <p><strong>Time:</strong> {@time_str}</p>
+        <p><strong>Weather:</strong> {@weather}</p>
+        <p><strong>Size:</strong> {@shadow_size}</p>
+        <p><strong>Speed:</strong> {@speed}</p>
+      </div>
+      <p :if={@caught} class="text-primary" style="font-weight: 700; margin-top: 0.5rem; text-align: center;">
         Caught!
       </p>
     </div>
