@@ -218,7 +218,7 @@ defmodule CreatureCrossingWeb.MatchGameLive do
       </div>
 
       <%!-- Card grid --%>
-      <div style={"display: grid; grid-template-columns: repeat(#{@cols}, 1fr); gap: 0.5rem; margin-bottom: 1rem;"}>
+      <div style={"display: grid; grid-template-columns: repeat(#{@cols}, 1fr); gap: 0.375rem; margin-bottom: 1rem;"}>
         <.card
           :for={card <- @cards}
           card={card}
@@ -245,8 +245,8 @@ defmodule CreatureCrossingWeb.MatchGameLive do
       <div style={"position: relative; width: 100%; height: 100%; transition: transform 0.4s; transform-style: preserve-3d;#{if @face_up, do: " transform: rotateY(180deg);", else: ""}"}>
         <%!-- Card back --%>
         <div style={"position: absolute; inset: 0; backface-visibility: hidden; border-radius: 0.5rem; border: 2px solid var(--color-neutral); background: var(--color-primary); display: flex; align-items: center; justify-content: center; flex-direction: column;"}>
-          <span style="font-size: 2rem;">{@card_back.emoji}</span>
-          <span style="font-size: 0.6rem; color: var(--color-primary-content); opacity: 0.8; margin-top: 0.25rem;">{@card_back.name}</span>
+          <span style="font-size: 1.25rem;">{@card_back.emoji}</span>
+          <span style="font-size: 0.5rem; color: var(--color-primary-content); opacity: 0.8; margin-top: 0.125rem;">{@card_back.name}</span>
         </div>
 
         <%!-- Card front --%>
@@ -254,7 +254,7 @@ defmodule CreatureCrossingWeb.MatchGameLive do
           <img
             src={@card.image_url}
             alt=""
-            style="width: 3rem; height: 3rem; object-fit: contain;"
+            style="width: 2rem; height: 2rem; object-fit: contain;"
             loading="lazy"
             onerror="this.style.display='none'"
           />
@@ -270,7 +270,8 @@ defmodule CreatureCrossingWeb.MatchGameLive do
   # Choose grid columns based on card count
   defp grid_cols(count) when count <= 6, do: 3
   defp grid_cols(count) when count <= 12, do: 4
-  defp grid_cols(count) when count <= 24, do: 6
-  defp grid_cols(count) when count <= 36, do: 6
-  defp grid_cols(_count), do: 8
+  defp grid_cols(count) when count <= 18, do: 6
+  defp grid_cols(count) when count <= 30, do: 6
+  defp grid_cols(count) when count <= 48, do: 8
+  defp grid_cols(_count), do: 10
 end
