@@ -200,8 +200,8 @@ defmodule Mix.Tasks.ScrapeWiki do
       sign: data.sign,
       catchphrase: data.catchphrase,
       hobby: data.hobby,
-      fav_colors: "[]",
-      fav_styles: "[]",
+      fav_colors: Jason.encode!(data.fav_colors),
+      fav_styles: Jason.encode!(data.fav_styles),
       icon_url: data.icon_url,
       poster_url: data.poster_url,
       amiibo_url: data.amiibo_url
