@@ -10,8 +10,11 @@ defmodule CreatureCrossingWeb.DevLive do
   import Ecto.Query
 
   @placeholder "/images/critter_placeholder.svg"
-  # Password is checked server-side only — never sent to client
-  @password_hash :crypto.hash(:sha256, "horsedev")
+  # Password is read from .dev_password at compile time — file is gitignored
+  @password_hash :crypto.hash(
+                   :sha256,
+                   ".dev_password" |> File.read!() |> String.trim()
+                 )
 
   @impl true
   def mount(_params, _session, socket) do
