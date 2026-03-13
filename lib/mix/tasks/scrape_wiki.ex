@@ -91,7 +91,7 @@ defmodule Mix.Tasks.ScrapeWiki do
 
     case WikiScraper.list_category_members("Category:New Horizons characters") do
       {:ok, titles} ->
-        titles = Enum.reject(titles, &String.contains?(&1, "/"))
+        titles = Enum.reject(titles, fn t -> String.contains?(t, "/") or String.contains?(t, "(") end)
         total = length(titles)
         Mix.shell().info("Found #{total} villager pages")
 
