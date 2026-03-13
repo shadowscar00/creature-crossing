@@ -237,7 +237,7 @@ defmodule CreatureCrossingWeb.MatchGameLive do
                 loading="lazy"
                 onerror="this.style.display='none'"
               />
-              <p style="font-size: 0.5rem; text-align: center; margin-top: 0.25rem; line-height: 1.2; word-break: break-word; overflow-wrap: break-word; hyphens: manual;">
+              <p style="font-size: 1rem; text-align: center; margin-top: 0.25rem; line-height: 1.2; word-break: break-word; overflow-wrap: break-word; hyphens: manual;">
                 {wrap_hyphenated(item.name)}
               </p>
             </div>
