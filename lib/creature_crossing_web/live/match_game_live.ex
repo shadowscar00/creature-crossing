@@ -232,9 +232,9 @@ defmodule CreatureCrossingWeb.MatchGameLive do
       </div>
 
       <%!-- Main layout: card grid + collection panel --%>
-      <div style="display: flex; gap: 1rem; justify-content: space-between;">
+      <div style="position: relative;">
         <%!-- Card grid --%>
-        <div style={"flex: 1; display: grid; grid-template-columns: repeat(#{@cols}, 5rem); gap: 0.375rem; align-content: start; justify-content: center;"}>
+        <div style={"display: grid; grid-template-columns: repeat(#{@cols}, 5rem); gap: 0.375rem; justify-content: center; margin-bottom: 1rem;"}>
           <.card
             :for={card <- @cards}
             card={card}
@@ -245,7 +245,7 @@ defmodule CreatureCrossingWeb.MatchGameLive do
         </div>
 
         <%!-- Collection panel --%>
-        <div style="width: 10rem; min-height: 10rem; border: 2px solid var(--color-neutral); border-radius: 0.75rem; padding: 0.5rem; background: var(--color-base-200); flex-shrink: 0;">
+        <div style="position: absolute; top: 0; right: 0; width: 10rem; min-height: 10rem; border: 2px solid var(--color-neutral); border-radius: 0.75rem; padding: 0.5rem; background: var(--color-base-200);">
           <p style="font-size: 0.75rem; font-weight: 700; text-align: center; margin-bottom: 0.375rem; opacity: 0.7;">
             Collection ({length(@collection)})
           </p>
