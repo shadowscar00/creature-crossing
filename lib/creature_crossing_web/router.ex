@@ -24,6 +24,7 @@ defmodule CreatureCrossingWeb.Router do
       live "/creature-crossing", CreatureCrossingLive
       live "/guess-who", GuessWhoLive
       live "/match-game", MatchGameLive
+      live "/data-test", DataTestLive
     end
   end
 
