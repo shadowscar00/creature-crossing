@@ -6,6 +6,7 @@ defmodule CreatureCrossing.Nookipedia.WikiScraper do
 
   @base "https://nookipedia.com/w/api.php"
   @placeholder "/images/critter_placeholder.svg"
+  @icon_aliases %{"Player" => "Villager"}
 
   # ── Category listing ──
 
@@ -384,13 +385,22 @@ defmodule CreatureCrossing.Nookipedia.WikiScraper do
 
       # Some characters use a short name in filenames (e.g. "Dr. Shrunk" -> "Shrunk")
       # or drop punctuation (e.g. "K.K. Slider" -> "KK" in "DJ KK NH Character Icon.png")
+      # or have a completely different file name (e.g. "Player" -> "Villager")
       short_name = name |> String.split(~r/[\s.]+/) |> List.last()
       bare_name = String.replace(name, ".", "")
+      icon_alias = Map.get(@icon_aliases, name)
+
+      # Build candidate filenames from all name variants
+      name_variants =
+        ([name, short_name, bare_name, icon_alias] ++
+          (bare_name |> String.split() |> Enum.filter(&(String.length(&1) >= 2))))
+        |> Enum.reject(&is_nil/1)
+        |> Enum.uniq()
 
       icon_candidates =
-        (["#{name} NH Villager Icon.png", "#{name} NH Character Icon.png"] ++
-          if(short_name != name, do: ["#{short_name} NH Character Icon.png"], else: []) ++
-          if(bare_name != name, do: ["#{bare_name} NH Character Icon.png"], else: []))
+        Enum.flat_map(name_variants, fn v ->
+          ["#{v} NH Villager Icon.png", "#{v} NH Character Icon.png"]
+        end)
         |> Enum.uniq()
 
       poster_file = "#{name}'s Poster NH Icon.png"
@@ -413,7 +423,7 @@ defmodule CreatureCrossing.Nookipedia.WikiScraper do
         Enum.find_value(icon_candidates, fn candidate ->
           Map.get(resolved, candidate)
         end) ||
-          fallback_from_page_images(name, ~r/(#{fallback_names}).*NH.*(Villager|Character).*Icon/i)
+          fallback_from_page_images(name, ~r/(#{fallback_names}).*NH.*(Villager|Character|Question).*Icon/i)
 
       poster_url =
         Map.get_lazy(resolved, poster_file, fn ->
