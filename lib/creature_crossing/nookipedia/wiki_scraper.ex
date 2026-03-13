@@ -413,6 +413,16 @@ defmodule CreatureCrossing.Nookipedia.WikiScraper do
           fallback_from_page_images(name, ~r/#{escaped}.*amiibo.*card.*NA/i)
         end
 
+      fav_colors =
+        [nh_info["favcolor1"], nh_info["favcolor2"]]
+        |> Enum.reject(&(is_nil(&1) or &1 == ""))
+        |> Enum.map(&String.trim/1)
+
+      fav_styles =
+        [nh_info["favstyle1"], nh_info["favstyle2"]]
+        |> Enum.reject(&(is_nil(&1) or &1 == ""))
+        |> Enum.map(&String.trim/1)
+
       {:ok,
        %{
          name: name,
@@ -423,6 +433,8 @@ defmodule CreatureCrossing.Nookipedia.WikiScraper do
          sign: info["sign"] || "Unknown",
          catchphrase: info["phrase"] || nh_info["catchphrase"] || "Unknown",
          hobby: nh_info["hobby"] || "Unknown",
+         fav_colors: fav_colors,
+         fav_styles: fav_styles,
          icon_url: icon_url,
          poster_url: poster_url,
          amiibo_url: amiibo_url
