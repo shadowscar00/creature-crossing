@@ -229,16 +229,16 @@ defmodule CreatureCrossingWeb.MatchGameLive do
         </div>
         <div style="margin: 0 10rem;">
           <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; justify-items: center;">
-            <div :for={item <- sort_collection(@collection)} style="text-align: center; width: 3.5rem;" title={item.name}>
+            <div :for={item <- sort_collection(@collection)} style="text-align: center; border: 2px solid var(--color-neutral); border-radius: 0.5rem; padding: 0.375rem; background: var(--color-base-200); width: 100%;" title={item.name}>
               <img
                 src={item.image_url}
                 alt=""
-                style="width: 3rem; height: 3rem; object-fit: contain; margin: 0 auto;"
+                style="width: 3.5rem; height: 3.5rem; object-fit: contain; margin: 0 auto; display: block;"
                 loading="lazy"
                 onerror="this.style.display='none'"
               />
-              <p style="font-size: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                {item.name}
+              <p style="font-size: 0.5rem; text-align: center; margin-top: 0.25rem; line-height: 1.2; word-break: break-word; overflow-wrap: break-word; hyphens: manual;">
+                {wrap_hyphenated(item.name)}
               </p>
             </div>
           </div>
@@ -275,8 +275,8 @@ defmodule CreatureCrossingWeb.MatchGameLive do
                 loading="lazy"
                 onerror="this.style.display='none'"
               />
-              <p style="font-size: 0.4rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                {item.name}
+              <p style="font-size: 0.4rem; line-height: 1.2; word-break: break-word; overflow-wrap: break-word; hyphens: manual;">
+                {wrap_hyphenated(item.name)}
               </p>
             </div>
           </div>
