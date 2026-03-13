@@ -34,12 +34,12 @@ defmodule CreatureCrossingWeb.MatchGameLive do
     {:ok, clothing} = Nookipedia.list_items("clothing")
 
     all_sources =
-      Enum.map(villagers, fn v -> %{name: v["name"], image_url: v["image_url"]} end) ++
-        Enum.map(bugs, fn c -> %{name: c["name"], image_url: c["image_url"]} end) ++
-        Enum.map(fish, fn c -> %{name: c["name"], image_url: c["image_url"]} end) ++
-        Enum.map(sea, fn c -> %{name: c["name"], image_url: c["image_url"]} end) ++
-        Enum.map(furniture, fn i -> %{name: i["name"], image_url: i["image_url"]} end) ++
-        Enum.map(clothing, fn i -> %{name: i["name"], image_url: i["image_url"]} end)
+      Enum.map(villagers, fn v -> %{name: v["name"], image_url: v["image_url"], category: :villager} end) ++
+        Enum.map(bugs, fn c -> %{name: c["name"], image_url: c["image_url"], category: :bug} end) ++
+        Enum.map(fish, fn c -> %{name: c["name"], image_url: c["image_url"], category: :fish} end) ++
+        Enum.map(sea, fn c -> %{name: c["name"], image_url: c["image_url"], category: :sea} end) ++
+        Enum.map(furniture, fn i -> %{name: i["name"], image_url: i["image_url"], category: :furniture} end) ++
+        Enum.map(clothing, fn i -> %{name: i["name"], image_url: i["image_url"], category: :clothing} end)
 
     socket =
       assign(socket,
@@ -75,8 +75,8 @@ defmodule CreatureCrossingWeb.MatchGameLive do
         pair_id = System.unique_integer([:positive])
 
         [
-          %{id: System.unique_integer([:positive]), pair_id: pair_id, name: item.name, image_url: item.image_url},
-          %{id: System.unique_integer([:positive]), pair_id: pair_id, name: item.name, image_url: item.image_url}
+          %{id: System.unique_integer([:positive]), pair_id: pair_id, name: item.name, image_url: item.image_url, category: item.category},
+          %{id: System.unique_integer([:positive]), pair_id: pair_id, name: item.name, image_url: item.image_url, category: item.category}
         ]
       end)
       |> Enum.shuffle()
@@ -123,7 +123,7 @@ defmodule CreatureCrossingWeb.MatchGameLive do
           all_matched = MapSet.size(new_matched) == length(socket.assigns.cards)
 
           # Add to collection
-          collected_item = %{name: first_card.name, image_url: first_card.image_url}
+          collected_item = %{name: first_card.name, image_url: first_card.image_url, category: first_card.category}
           new_collection = socket.assigns.collection ++ [collected_item]
 
           socket =
@@ -208,26 +208,48 @@ defmodule CreatureCrossingWeb.MatchGameLive do
       </div>
 
       <%!-- Level complete overlay --%>
-      <div :if={@phase == :complete} style="text-align: center; margin-bottom: 1rem; padding: 1rem; border-radius: 0.75rem; background: color-mix(in oklch, var(--color-success) 15%, transparent);">
+      <div :if={@phase == :complete && @level < @max_level} style="text-align: center; margin-bottom: 1rem; padding: 1rem; border-radius: 0.75rem; background: color-mix(in oklch, var(--color-success) 15%, transparent);">
         <p style="font-size: 1.5rem; font-weight: 800; color: var(--color-success); margin-bottom: 0.25rem;">
           Level {@level} Complete!
         </p>
         <p style="opacity: 0.7; margin-bottom: 0.75rem;">
           Finished in {@moves} moves
         </p>
-        <button :if={@level < @max_level} phx-click="next_level" class="btn btn-primary btn-lg">
+        <button phx-click="next_level" class="btn btn-primary btn-lg">
           Next Level
         </button>
-        <div :if={@level == @max_level}>
-          <p style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">You beat all 5 levels!</p>
-          <button phx-click="back_to_level_1" class="btn btn-primary btn-lg">
-            Play Again
-          </button>
+      </div>
+
+      <%!-- You Win screen --%>
+      <div :if={@phase == :complete && @level == @max_level} style="text-align: center;">
+        <div style="margin-bottom: 1rem; padding: 1rem; border-radius: 0.75rem; background: color-mix(in oklch, var(--color-success) 15%, transparent);">
+          <p style="font-size: 2rem; font-weight: 800; color: var(--color-success);">
+            You Win!
+          </p>
         </div>
+        <div style="margin: 0 10rem;">
+          <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; justify-items: center;">
+            <div :for={item <- sort_collection(@collection)} style="text-align: center; border: 2px solid var(--color-neutral); border-radius: 0.5rem; padding: 0.375rem; background: var(--color-base-200); width: 100%;" title={item.name}>
+              <img
+                src={item.image_url}
+                alt=""
+                style="width: 3.5rem; height: 3.5rem; object-fit: contain; margin: 0 auto; display: block;"
+                loading="lazy"
+                onerror="this.style.display='none'"
+              />
+              <p style="font-size: 1rem; text-align: center; margin-top: 0.25rem; line-height: 1.2; word-break: break-word; overflow-wrap: break-word; hyphens: manual;">
+                {wrap_hyphenated(item.name)}
+              </p>
+            </div>
+          </div>
+        </div>
+        <button phx-click="back_to_level_1" class="btn btn-primary btn-lg" style="margin-top: 1.5rem;">
+          Play Again
+        </button>
       </div>
 
       <%!-- Main layout: card grid + collection panel --%>
-      <div style="position: relative;">
+      <div :if={!(@phase == :complete && @level == @max_level)} style="position: relative;">
         <%!-- Card grid --%>
         <div style={"display: grid; grid-template-columns: repeat(#{@cols}, 5rem); gap: 0.375rem; justify-content: center; margin-bottom: 1rem;"}>
           <.card
@@ -253,8 +275,8 @@ defmodule CreatureCrossingWeb.MatchGameLive do
                 loading="lazy"
                 onerror="this.style.display='none'"
               />
-              <p style="font-size: 0.4rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                {item.name}
+              <p style="font-size: 0.4rem; line-height: 1.2; word-break: break-word; overflow-wrap: break-word; hyphens: manual;">
+                {wrap_hyphenated(item.name)}
               </p>
             </div>
           </div>
@@ -300,6 +322,12 @@ defmodule CreatureCrossingWeb.MatchGameLive do
       </div>
     </div>
     """
+  end
+
+  @category_order %{villager: 0, bug: 1, fish: 2, sea: 3, furniture: 4, clothing: 5}
+
+  defp sort_collection(collection) do
+    Enum.sort_by(collection, fn item -> Map.get(@category_order, item.category, 99) end)
   end
 
   defp wrap_hyphenated(name) do

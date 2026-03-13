@@ -547,7 +547,7 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
               loading="lazy"
               onerror="this.style.display='none'"
             />
-            <p style="font-weight: 600; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            <p style="font-weight: 600; font-size: 0.75rem; line-height: 1.2; word-break: break-word; overflow-wrap: break-word;">
               {villager["name"]}
             </p>
           </div>
