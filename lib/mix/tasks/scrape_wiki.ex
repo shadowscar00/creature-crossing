@@ -89,8 +89,9 @@ defmodule Mix.Tasks.ScrapeWiki do
   defp scrape_villagers do
     Mix.shell().info("\n=== Scraping villagers ===")
 
-    case WikiScraper.list_category_members("Category:New Horizons villagers") do
+    case WikiScraper.list_category_members("Category:New Horizons characters") do
       {:ok, titles} ->
+        titles = Enum.reject(titles, &String.contains?(&1, "/"))
         total = length(titles)
         Mix.shell().info("Found #{total} villager pages")
 

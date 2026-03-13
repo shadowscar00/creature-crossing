@@ -63,7 +63,7 @@ defmodule CreatureCrossing.Data.HemisphereParser do
   defp parse_single_month_range(range_str) do
     range_str = String.trim(range_str)
 
-    case String.split(range_str, ~r/\s*[\-–—]\s*/) do
+    case String.split(range_str, ~r/\s*[\-\x{2013}\x{2014}]+\s*/u) do
       [start_str, end_str] ->
         start_month = month_number(String.trim(start_str))
         end_month = month_number(String.trim(end_str))
