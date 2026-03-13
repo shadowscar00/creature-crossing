@@ -382,7 +382,17 @@ defmodule CreatureCrossing.Nookipedia.WikiScraper do
 
       escaped = Regex.escape(name)
 
-      icon_file = "#{name} NH Villager Icon.png"
+      # Some characters use a short name in filenames (e.g. "Dr. Shrunk" -> "Shrunk")
+      # or drop punctuation (e.g. "K.K. Slider" -> "KK" in "DJ KK NH Character Icon.png")
+      short_name = name |> String.split(~r/[\s.]+/) |> List.last()
+      bare_name = String.replace(name, ".", "")
+
+      icon_candidates =
+        (["#{name} NH Villager Icon.png", "#{name} NH Character Icon.png"] ++
+          if(short_name != name, do: ["#{short_name} NH Character Icon.png"], else: []) ++
+          if(bare_name != name, do: ["#{bare_name} NH Character Icon.png"], else: []))
+        |> Enum.uniq()
+
       poster_file = "#{name}'s Poster NH Icon.png"
 
       amiibo_number = find_amiibo_number(wikitext, name)
@@ -390,13 +400,20 @@ defmodule CreatureCrossing.Nookipedia.WikiScraper do
         if amiibo_number, do: "#{amiibo_number} #{name} amiibo card NA.png", else: nil
 
       # Resolve all images with fallbacks
-      all_files = [icon_file, poster_file, amiibo_file] |> Enum.reject(&is_nil/1)
+      all_files = (icon_candidates ++ [poster_file, amiibo_file]) |> Enum.reject(&is_nil/1)
       resolved = resolve_image_urls(all_files)
 
+      bare_words = bare_name |> String.split() |> Enum.filter(&(String.length(&1) >= 2)) |> Enum.map(&Regex.escape/1)
+      fallback_names =
+        ([escaped, Regex.escape(short_name), Regex.escape(bare_name)] ++ bare_words)
+        |> Enum.uniq()
+        |> Enum.join("|")
+
       icon_url =
-        Map.get_lazy(resolved, icon_file, fn ->
-          fallback_from_page_images(name, ~r/#{escaped}.*NH.*Villager.*Icon/i)
-        end)
+        Enum.find_value(icon_candidates, fn candidate ->
+          Map.get(resolved, candidate)
+        end) ||
+          fallback_from_page_images(name, ~r/(#{fallback_names}).*NH.*(Villager|Character).*Icon/i)
 
       poster_url =
         Map.get_lazy(resolved, poster_file, fn ->

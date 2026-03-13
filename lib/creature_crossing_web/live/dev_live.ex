@@ -112,17 +112,7 @@ defmodule CreatureCrossingWeb.DevLive do
   defp load_problem_villagers do
     Repo.all(
       from v in Villager,
-        where:
-          v.icon_url == ^@placeholder or
-            v.poster_url == ^@placeholder or
-            v.amiibo_url == ^@placeholder or
-            v.personality == "Unknown" or
-            v.hobby == "Unknown" or
-            v.species == "Unknown" or
-            v.sign == "Unknown" or
-            v.fav_colors == "[]" or
-            v.fav_styles == "[]" or
-            v.role == "unclassified",
+        where: v.role == "unclassified",
         order_by: v.name
     )
     |> Enum.map(fn v ->
