@@ -634,30 +634,38 @@ defmodule CreatureCrossing.Nookipedia.WikiScraper do
     |> Enum.max_by(&map_size/1, fn -> %{} end)
   end
 
+  @acronyms %{"dal" => "DAL"}
+
   defp title_case(nil), do: ""
 
   defp title_case(str) do
     str
     |> String.split(" ")
     |> Enum.map_join(" ", fn word ->
-      word
-      |> String.split("-")
-      |> Enum.map_join("-", fn part ->
-        # Handle apostrophes: possessive "'s" stays lowercase, others capitalize
-        case String.split(part, "'", parts: 2) do
-          [before, "s"] ->
-            String.capitalize(before) <> "'s"
+      case Map.get(@acronyms, String.downcase(word)) do
+        nil ->
+          word
+          |> String.split("-")
+          |> Enum.map_join("-", fn part ->
+            # Handle apostrophes: possessive "'s" stays lowercase, others capitalize
+            case String.split(part, "'", parts: 2) do
+              [before, "s"] ->
+                String.capitalize(before) <> "'s"
 
-          [before, "S"] ->
-            String.capitalize(before) <> "'s"
+              [before, "S"] ->
+                String.capitalize(before) <> "'s"
 
-          [before, after_apo] ->
-            String.capitalize(before) <> "'" <> String.capitalize(after_apo)
+              [before, after_apo] ->
+                String.capitalize(before) <> "'" <> String.capitalize(after_apo)
 
-          [single] ->
-            String.capitalize(single)
-        end
-      end)
+              [single] ->
+                String.capitalize(single)
+            end
+          end)
+
+        acronym ->
+          acronym
+      end
     end)
   end
 
