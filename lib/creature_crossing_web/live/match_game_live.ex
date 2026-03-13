@@ -2,9 +2,10 @@ defmodule CreatureCrossingWeb.MatchGameLive do
   @moduledoc """
   Memory match card game using Animal Crossing imagery.
 
-  10 levels with increasing card counts (6 per level).
+  5 levels with increasing card counts (6 per level).
   Cards sourced from villagers, critters, and items.
   AC-themed card backs change each level.
+  Matched cards are collected and cannot reappear in later levels.
   """
   use CreatureCrossingWeb, :live_view
 
@@ -52,15 +53,23 @@ defmodule CreatureCrossingWeb.MatchGameLive do
         max_level: @max_level
       )
 
+    socket = assign(socket, collection: [])
     {:ok, start_level(socket, 1)}
   end
 
   defp start_level(socket, level) do
     pairs_count = div(level * @cards_per_level, 2)
 
+    # Filter out already-collected items
+    collected_names = MapSet.new(socket.assigns.collection, & &1.name)
+
+    available =
+      socket.assigns.all_sources
+      |> Enum.reject(fn item -> MapSet.member?(collected_names, item.name) end)
+
     # Pick random items for pairs
     selected =
-      socket.assigns.all_sources
+      available
       |> Enum.shuffle()
       |> Enum.take(pairs_count)
 
@@ -118,12 +127,17 @@ defmodule CreatureCrossingWeb.MatchGameLive do
           new_matched = matched |> MapSet.put(first_id) |> MapSet.put(second_id)
           all_matched = MapSet.size(new_matched) == length(socket.assigns.cards)
 
+          # Add to collection
+          collected_item = %{name: first_card.name, image_url: first_card.image_url}
+          new_collection = socket.assigns.collection ++ [collected_item]
+
           socket =
             assign(socket,
               flipped: [],
               matched: new_matched,
               moves: socket.assigns.moves + 1,
-              phase: if(all_matched, do: :complete, else: :playing)
+              phase: if(all_matched, do: :complete, else: :playing),
+              collection: new_collection
             )
 
           {:noreply, socket}
@@ -157,7 +171,7 @@ defmodule CreatureCrossingWeb.MatchGameLive do
 
   @impl true
   def handle_event("back_to_level_1", _params, socket) do
-    {:noreply, start_level(socket, 1)}
+    {:noreply, socket |> assign(collection: []) |> start_level(1)}
   end
 
   @impl true
@@ -180,13 +194,13 @@ defmodule CreatureCrossingWeb.MatchGameLive do
       |> assign(:cols, cols)
 
     ~H"""
-    <div class="max-w-6xl mx-auto px-4" style="padding-top: 0.25rem;">
+    <div class="mx-auto px-4" style="padding-top: 0.25rem; max-width: 72rem;">
       <%!-- Header --%>
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
         <div>
           <button phx-click="back_to_level_1" class="btn btn-sm btn-ghost">
             <span class="hero-arrow-path" style="width: 1rem; height: 1rem;"></span>
-            Restart
+            New Game
           </button>
         </div>
         <h1 style="font-size: 2rem;" class="font-extrabold tracking-tight">
@@ -217,15 +231,42 @@ defmodule CreatureCrossingWeb.MatchGameLive do
         </div>
       </div>
 
-      <%!-- Card grid --%>
-      <div style={"display: grid; grid-template-columns: repeat(#{@cols}, 5rem); gap: 0.375rem; justify-content: center; margin-bottom: 1rem;"}>
-        <.card
-          :for={card <- @cards}
-          card={card}
-          flipped={card.id in @flipped}
-          matched={MapSet.member?(@matched, card.id)}
-          card_back={@card_back}
-        />
+      <%!-- Main layout: card grid + collection panel --%>
+      <div style="position: relative;">
+        <%!-- Card grid --%>
+        <div style={"display: grid; grid-template-columns: repeat(#{@cols}, 5rem); gap: 0.375rem; justify-content: center; margin-bottom: 1rem;"}>
+          <.card
+            :for={card <- @cards}
+            card={card}
+            flipped={card.id in @flipped}
+            matched={MapSet.member?(@matched, card.id)}
+            card_back={@card_back}
+          />
+        </div>
+
+        <%!-- Collection panel --%>
+        <div style="position: absolute; top: 0; right: 0; width: 10rem; min-height: 10rem; border: 2px solid var(--color-neutral); border-radius: 0.75rem; padding: 0.5rem; background: var(--color-base-200);">
+          <p style="font-size: 0.75rem; font-weight: 700; text-align: center; margin-bottom: 0.375rem; opacity: 0.7;">
+            Collection ({length(@collection)})
+          </p>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.25rem; justify-content: center;">
+            <div :for={item <- @collection} style="width: 2.5rem; text-align: center;" title={item.name}>
+              <img
+                src={item.image_url}
+                alt=""
+                style="width: 2rem; height: 2rem; object-fit: contain; margin: 0 auto;"
+                loading="lazy"
+                onerror="this.style.display='none'"
+              />
+              <p style="font-size: 0.4rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                {item.name}
+              </p>
+            </div>
+          </div>
+          <p :if={@collection == []} style="font-size: 0.625rem; text-align: center; opacity: 0.5; margin-top: 1rem;">
+            Match pairs to collect!
+          </p>
+        </div>
       </div>
     </div>
     """

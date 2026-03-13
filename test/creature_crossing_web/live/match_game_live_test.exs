@@ -140,7 +140,7 @@ defmodule CreatureCrossingWeb.MatchGameLiveTest do
     complete_current_level(view)
     view |> element("button", "Next Level") |> render_click()
 
-    html = view |> element("button", "Restart") |> render_click()
+    html = view |> element("button", "New Game") |> render_click()
     assert html =~ "Level 1/5"
   end
 
@@ -182,6 +182,75 @@ defmodule CreatureCrossingWeb.MatchGameLiveTest do
     # Just verify the structure is correct
     assert length(names1) == 6
     assert length(names2) == 6
+  end
+
+  # --- Collection tests ---
+
+  test "shows empty collection panel at start", %{conn: conn} do
+    {:ok, _view, html} = live(conn, ~p"/match-game")
+    assert html =~ "Collection (0)"
+    assert html =~ "Match pairs to collect!"
+  end
+
+  test "matching a pair adds it to collection", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/match-game")
+
+    state = :sys.get_state(view.pid)
+    [a, b] = state.socket.assigns.cards |> Enum.group_by(& &1.pair_id) |> Map.values() |> hd()
+
+    view |> element(~s(div[phx-value-id="#{a.id}"])) |> render_click()
+    html = view |> element(~s(div[phx-value-id="#{b.id}"])) |> render_click()
+
+    assert html =~ "Collection (1)"
+    assert html =~ a.name
+  end
+
+  test "collected cards do not appear in next level", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/match-game")
+
+    # Complete level 1 and note collected names
+    complete_current_level(view)
+
+    state = :sys.get_state(view.pid)
+    collected_names = Enum.map(state.socket.assigns.collection, & &1.name) |> MapSet.new()
+    assert MapSet.size(collected_names) == 3
+
+    # Advance to level 2
+    view |> element("button", "Next Level") |> render_click()
+
+    state = :sys.get_state(view.pid)
+    level2_names = Enum.map(state.socket.assigns.cards, & &1.name) |> MapSet.new()
+
+    # No overlap between collected and level 2 cards
+    assert MapSet.intersection(collected_names, level2_names) |> MapSet.size() == 0
+  end
+
+  test "new game clears collection", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/match-game")
+
+    complete_current_level(view)
+
+    state = :sys.get_state(view.pid)
+    assert length(state.socket.assigns.collection) == 3
+
+    view |> element("button", "New Game") |> render_click()
+
+    state = :sys.get_state(view.pid)
+    assert state.socket.assigns.collection == []
+  end
+
+  test "collection persists across levels", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/match-game")
+
+    # Complete level 1 (3 pairs collected)
+    complete_current_level(view)
+    view |> element("button", "Next Level") |> render_click()
+
+    # Complete level 2 (6 more pairs collected)
+    complete_current_level(view)
+
+    state = :sys.get_state(view.pid)
+    assert length(state.socket.assigns.collection) == 9
   end
 
   # Helper to complete the current level by matching all pairs

@@ -229,7 +229,12 @@ defmodule CreatureCrossing.Nookipedia.Stub do
       %{"name" => "Log Bench", "image_url" => "https://dodo.ac/np/images/thumb/a/a6/Log_Bench.png/128px-Log_Bench.png"},
       %{"name" => "Shell Table", "image_url" => "https://dodo.ac/np/images/thumb/4/4d/Shell_Table.png/128px-Shell_Table.png"},
       %{"name" => "Wooden Bookshelf", "image_url" => "https://dodo.ac/np/images/thumb/2/2a/Wooden_Bookshelf.png/128px-Wooden_Bookshelf.png"},
-      %{"name" => "Rattan Armchair", "image_url" => "https://dodo.ac/np/images/thumb/e/e4/Rattan_Armchair.png/128px-Rattan_Armchair.png"}
+      %{"name" => "Rattan Armchair", "image_url" => "https://dodo.ac/np/images/thumb/e/e4/Rattan_Armchair.png/128px-Rattan_Armchair.png"},
+      %{"name" => "Cherry-blossom Bonsai", "image_url" => "/images/critter_placeholder.svg"},
+      %{"name" => "Bamboo Speaker", "image_url" => "/images/critter_placeholder.svg"},
+      %{"name" => "Palm-tree Lamp", "image_url" => "/images/critter_placeholder.svg"},
+      %{"name" => "Frozen Arch", "image_url" => "/images/critter_placeholder.svg"},
+      %{"name" => "Starry Garland", "image_url" => "/images/critter_placeholder.svg"}
     ]}
   end
 
@@ -237,7 +242,12 @@ defmodule CreatureCrossing.Nookipedia.Stub do
     {:ok, [
       %{"name" => "Aloha Shirt", "image_url" => "https://dodo.ac/np/images/thumb/a/a5/Aloha_Shirt.png/128px-Aloha_Shirt.png"},
       %{"name" => "Tuxedo", "image_url" => "https://dodo.ac/np/images/thumb/c/c5/Tuxedo.png/128px-Tuxedo.png"},
-      %{"name" => "Royal Crown", "image_url" => "https://dodo.ac/np/images/thumb/c/c2/Royal_Crown.png/128px-Royal_Crown.png"}
+      %{"name" => "Royal Crown", "image_url" => "https://dodo.ac/np/images/thumb/c/c2/Royal_Crown.png/128px-Royal_Crown.png"},
+      %{"name" => "Mage's Robe", "image_url" => "/images/critter_placeholder.svg"},
+      %{"name" => "Steampunk Glasses", "image_url" => "/images/critter_placeholder.svg"},
+      %{"name" => "Pirate Outfit", "image_url" => "/images/critter_placeholder.svg"},
+      %{"name" => "Space Helmet", "image_url" => "/images/critter_placeholder.svg"},
+      %{"name" => "Ninja Hood", "image_url" => "/images/critter_placeholder.svg"}
     ]}
   end
 
