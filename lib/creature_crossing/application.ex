@@ -11,8 +11,7 @@ defmodule CreatureCrossing.Application do
       CreatureCrossingWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:creature_crossing, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: CreatureCrossing.PubSub},
-      # Start a worker by calling: CreatureCrossing.Worker.start_link(arg)
-      # {CreatureCrossing.Worker, arg},
+      CreatureCrossing.Repo,
       # Start to serve requests, typically the last entry
       CreatureCrossingWeb.Endpoint
     ]
