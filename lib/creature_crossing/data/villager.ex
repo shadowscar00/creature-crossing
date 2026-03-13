@@ -46,7 +46,8 @@ defmodule CreatureCrossing.Data.Villager do
       "sign" => v.sign,
       "hobby" => v.hobby,
       "fav_colors" => decode_json(v.fav_colors, []),
-      "fav_styles" => decode_json(v.fav_styles, [])
+      "fav_styles" => decode_json(v.fav_styles, []),
+      "role" => v.role || "unclassified"
     }
   end
 
