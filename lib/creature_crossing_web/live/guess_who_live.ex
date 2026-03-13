@@ -41,7 +41,10 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, villagers} = Nookipedia.list_villagers()
+    {:ok, all_villagers} = Nookipedia.list_villagers()
+
+    villagers = Enum.filter(all_villagers, fn v -> v["role"] == "villager" end)
+
     socket = assign(socket, page_title: "Guess Who", all_villagers: villagers)
     {:ok, new_game(socket)}
   end
