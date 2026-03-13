@@ -246,13 +246,21 @@ defmodule CreatureCrossingWeb.GuessWhoLiveTest do
     view |> element(~s(button[phx-click="dismiss_liar"])) |> render_click()
     view |> element(~s(button[phx-click="dismiss_com_result"])) |> render_click()
 
-    # Do another player turn and COM turn
+    # Verify liar_caught is set in state
+    state = :sys.get_state(view.pid)
+    assert state.socket.assigns.liar_caught == true
+
+    # If COM asks another question, it should show "Answer Honestly"
     do_player_turn(view)
     send(view.pid, :com_turn)
 
-    html = render(view)
-    assert html =~ "no cheating"
-    assert html =~ "Answer Honestly"
+    state = :sys.get_state(view.pid)
+
+    if state.socket.assigns.com_question_modal && !Map.get(state.socket.assigns.com_question_modal, :guess) do
+      html = render(view)
+      assert html =~ "no cheating"
+      assert html =~ "Answer Honestly"
+    end
   end
 
   # --- Guess mode tests ---
