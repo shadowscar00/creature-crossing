@@ -8,6 +8,7 @@
 import Config
 
 config :creature_crossing,
+  ecto_repos: [CreatureCrossing.Repo],
   generators: [timestamp_type: :utc_datetime]
 
 # Configure the endpoint

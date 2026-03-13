@@ -24,6 +24,16 @@ config :creature_crossing, CreatureCrossingWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
 if config_env() == :prod do
+  database_path =
+    System.get_env("DATABASE_PATH") ||
+      Path.join(File.cwd!(), "creature_crossing_prod.db")
+
+  config :creature_crossing, CreatureCrossing.Repo,
+    database: database_path,
+    pool_size: 5
+
+  config :creature_crossing, :nookipedia_client, CreatureCrossing.Nookipedia.Db
+
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
   # want to use a different value for prod and you most likely don't want

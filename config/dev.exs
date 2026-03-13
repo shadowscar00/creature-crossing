@@ -1,5 +1,11 @@
 import Config
 
+config :creature_crossing, CreatureCrossing.Repo,
+  database: Path.expand("../creature_crossing_dev.db", __DIR__),
+  pool_size: 5,
+  stacktrace: true,
+  show_sensitive_data_on_connection_error: true
+
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #
@@ -59,7 +65,7 @@ config :creature_crossing, CreatureCrossingWeb.Endpoint,
   ]
 
 # Use stub Nookipedia client in dev (no API key needed)
-config :creature_crossing, :nookipedia_client, CreatureCrossing.Nookipedia.Stub
+config :creature_crossing, :nookipedia_client, CreatureCrossing.Nookipedia.Db
 
 # Enable dev routes for dashboard and mailbox
 config :creature_crossing, dev_routes: true
