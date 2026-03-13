@@ -692,11 +692,12 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
       <div style="padding: 0.75rem; text-align: center; background: color-mix(in oklch, var(--color-primary) 10%, transparent);">
         <p style="font-weight: 700; font-size: 0.8rem; margin-bottom: 0.5rem;">Your Villager</p>
         <img
-          src={@secret_villager["image_url"]}
+          src={@secret_villager["amiibo_url"]}
           alt=""
-          style="width: 3.5rem; height: 3.5rem; object-fit: contain; margin: 0 auto 0.25rem auto; display: block;"
+          style="width: 6rem; height: auto; object-fit: contain; margin: 0 auto 0.25rem auto; display: block; border-radius: 0.375rem;"
           loading="lazy"
-          onerror="this.style.display='none'"
+          onerror="this.src=this.dataset.fallback"
+          data-fallback={@secret_villager["image_url"]}
         />
         <p class="text-primary" style="font-weight: 700; font-size: 0.9rem;">{@secret_villager["name"]}</p>
         <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.25rem; text-align: left;">
