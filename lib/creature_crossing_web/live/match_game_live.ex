@@ -293,13 +293,18 @@ defmodule CreatureCrossingWeb.MatchGameLive do
             loading="lazy"
             onerror="this.style.display='none'"
           />
-          <p style="font-size: 0.6rem; font-weight: 600; text-align: center; margin-top: 0.25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">
-            {@card.name}
+          <p style="font-size: 0.6rem; font-weight: 600; text-align: center; margin-top: 0.25rem; max-width: 100%; line-height: 1.2; word-break: break-word; overflow-wrap: break-word; hyphens: manual;">
+            {wrap_hyphenated(@card.name)}
           </p>
         </div>
       </div>
     </div>
     """
+  end
+
+  defp wrap_hyphenated(name) do
+    # Insert a zero-width space after hyphens so the browser can break there
+    String.replace(name, "-", "-\u200B")
   end
 
   defp grid_cols(count) do
