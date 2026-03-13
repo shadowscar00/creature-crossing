@@ -18,6 +18,7 @@ defmodule CreatureCrossing.Data.Villager do
     field :icon_url, :string
     field :poster_url, :string
     field :amiibo_url, :string
+    field :role, :string, default: "unclassified"
 
     timestamps()
   end
@@ -27,7 +28,7 @@ defmodule CreatureCrossing.Data.Villager do
     |> cast(attrs, [
       :name, :species, :personality, :gender, :birthday, :birthday_month,
       :birthday_day, :sign, :catchphrase, :hobby, :fav_colors, :fav_styles,
-      :icon_url, :poster_url, :amiibo_url
+      :icon_url, :poster_url, :amiibo_url, :role
     ])
     |> validate_required([:name])
     |> unique_constraint([:name])

@@ -35,6 +35,9 @@ creature_crossing_tmp-*.tar
 *.db
 *.db-*
 
+# Dev secrets
+.dev_password
+
 # In case you use Node.js/npm, you want to ignore these.
 npm-debug.log
 /assets/node_modules/
