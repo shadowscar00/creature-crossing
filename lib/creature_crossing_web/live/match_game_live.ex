@@ -16,16 +16,11 @@ defmodule CreatureCrossingWeb.MatchGameLive do
   @flip_back_delay 1000
 
   @card_backs [
-    %{name: "Leaf", emoji: "🍃"},
-    %{name: "Bell Bag", emoji: "💰"},
-    %{name: "Fossil", emoji: "🦴"},
-    %{name: "Star", emoji: "⭐"},
-    %{name: "Balloon", emoji: "🎈"},
-    %{name: "Music Note", emoji: "🎵"},
-    %{name: "Flower", emoji: "🌸"},
-    %{name: "Shell", emoji: "🐚"},
-    %{name: "Fish", emoji: "🐟"},
-    %{name: "Bug", emoji: "🦋"}
+    %{image: "/images/card_backs/level1.jpg", border: "#5a9e91"},
+    %{image: "/images/card_backs/level2.jpg", border: "#f0a0a0"},
+    %{image: "/images/card_backs/level3.jpg", border: "#2dbc94"},
+    %{image: "/images/card_backs/level4.jpg", border: "#5ec4b0"},
+    %{image: "/images/card_backs/level5.png", border: "#c88a1c"}
   ]
 
   @impl true
@@ -285,9 +280,8 @@ defmodule CreatureCrossingWeb.MatchGameLive do
     >
       <div style={"position: relative; width: 100%; height: 100%; transition: transform 0.4s; transform-style: preserve-3d;#{if @face_up, do: " transform: rotateY(180deg);", else: ""}"}>
         <%!-- Card back --%>
-        <div style={"position: absolute; inset: 0; backface-visibility: hidden; border-radius: 0.5rem; border: 2px solid var(--color-neutral); background: var(--color-primary); display: flex; align-items: center; justify-content: center; flex-direction: column;"}>
-          <span style="font-size: 1.25rem;">{@card_back.emoji}</span>
-          <span style="font-size: 0.5rem; color: var(--color-primary-content); opacity: 0.8; margin-top: 0.125rem;">{@card_back.name}</span>
+        <div style={"position: absolute; inset: 0; backface-visibility: hidden; border-radius: 0.5rem; border: 3px solid #{@card_back.border}; overflow: hidden;"}>
+          <img src={@card_back.image} alt="" style="width: 100%; height: 100%; object-fit: cover;" />
         </div>
 
         <%!-- Card front --%>
