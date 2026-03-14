@@ -48,7 +48,8 @@ defmodule CreatureCrossing.Data.Villager do
       "fav_colors" => decode_json(v.fav_colors, []),
       "fav_styles" => decode_json(v.fav_styles, []),
       "role" => v.role || "unclassified",
-      "amiibo_url" => v.amiibo_url
+      "amiibo_url" => v.amiibo_url,
+      "poster_url" => v.poster_url
     }
   end
 
