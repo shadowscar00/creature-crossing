@@ -440,9 +440,9 @@ defmodule CreatureCrossing.Nookipedia.WikiScraper do
           fallback_from_page_images(name, ~r/#{escaped}.*amiibo.*card.*NA/i)
         end
 
-      # Reject non-standard cards (Sanrio, NLWa/Welcome amiibo, Pocket Camp, promo)
+      # Reject non-standard cards (Sanrio, NLWa/Welcome amiibo)
       amiibo_url =
-        if is_binary(raw_amiibo_url) and Regex.match?(~r/Sanrio|NLWa|Pocket|promo/i, raw_amiibo_url) do
+        if is_binary(raw_amiibo_url) and Regex.match?(~r/Sanrio|NLWa/, raw_amiibo_url) do
           nil
         else
           raw_amiibo_url
