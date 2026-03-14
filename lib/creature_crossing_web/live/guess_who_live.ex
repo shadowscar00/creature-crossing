@@ -692,7 +692,7 @@ defmodule CreatureCrossingWeb.GuessWhoLive do
       <div style="padding: 0.75rem; text-align: center; background: color-mix(in oklch, var(--color-primary) 10%, transparent);">
         <p style="font-weight: 700; font-size: 0.8rem; margin-bottom: 0.5rem;">Your Villager</p>
         <img
-          src={@secret_villager["poster_url"] || @secret_villager["image_url"]}
+          src={@secret_villager["amiibo_url"] || @secret_villager["poster_url"] || @secret_villager["image_url"]}
           alt=""
           style="width: 6rem; height: auto; object-fit: contain; margin: 0 auto 0.25rem auto; display: block; border-radius: 0.375rem;"
           loading="lazy"
