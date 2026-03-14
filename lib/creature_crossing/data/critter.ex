@@ -46,9 +46,13 @@ defmodule CreatureCrossing.Data.Critter do
       "name" => c.name,
       "image_url" => c.icon_url || "/images/critter_placeholder.svg",
       "number" => c.id,
+      "critter_type" => c.type,
       "location" => c.location,
+      "weather" => c.weather,
       "rarity" => c.rarity,
       "sell_nook" => parse_int_or_string(c.sell_nook),
+      "shadow_size" => c.shadow_size,
+      "speed" => c.speed,
       "north" => north,
       "south" => south
     }
