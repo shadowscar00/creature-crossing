@@ -97,6 +97,28 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
   end
 
   @impl true
+  def handle_event("select_all", %{"category" => category}, socket) do
+    critters =
+      case category do
+        "bugs" -> socket.assigns.bugs
+        "fish" -> socket.assigns.fish
+        "sea" -> socket.assigns.sea
+      end
+
+    names = MapSet.new(critters, & &1["name"])
+    all_selected = MapSet.subset?(names, socket.assigns.selected)
+
+    selected =
+      if all_selected do
+        MapSet.difference(socket.assigns.selected, names)
+      else
+        MapSet.union(socket.assigns.selected, names)
+      end
+
+    {:noreply, assign(socket, selected: selected)}
+  end
+
+  @impl true
   def handle_event("back_to_selection", _params, socket) do
     {:noreply, assign(socket, result: nil)}
   end
@@ -179,9 +201,9 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
 
       <%!-- Three category boxes side by side --%>
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-        <.critter_box title="Bugs" critters={@bugs} selected={@selected} />
-        <.critter_box title="Fish" critters={@fish} selected={@selected} />
-        <.critter_box title="Diving" critters={@sea} selected={@selected} />
+        <.critter_box title="Bugs" category="bugs" critters={@bugs} selected={@selected} />
+        <.critter_box title="Fish" category="fish" critters={@fish} selected={@selected} />
+        <.critter_box title="Diving" category="sea" critters={@sea} selected={@selected} />
       </div>
     </div>
     """
@@ -264,11 +286,24 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
   end
 
   defp critter_box(assigns) do
+    all_names = MapSet.new(assigns.critters, & &1["name"])
+    all_selected = MapSet.subset?(all_names, assigns.selected)
+    selected_count = assigns.critters |> Enum.count(fn c -> MapSet.member?(assigns.selected, c["name"]) end)
+    assigns = assigns |> assign(:all_selected, all_selected) |> assign(:selected_count, selected_count)
+
     ~H"""
     <div style={"border: 2px solid var(--color-neutral); border-radius: 0.75rem; overflow: hidden; display: flex; flex-direction: column; background: var(--color-base-200);"}>
-      <h2 style="text-align: center; font-weight: 700; font-size: 0.95rem; padding: 0.6rem 0; background: var(--color-base-300); border-bottom: 2px solid var(--color-neutral);">
-        {@title} ({length(@critters)})
-      </h2>
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.75rem; background: var(--color-base-300); border-bottom: 2px solid var(--color-neutral);">
+        <span style="font-weight: 700; font-size: 0.95rem;">{@title} ({@selected_count}/{length(@critters)})</span>
+        <button
+          phx-click="select_all"
+          phx-value-category={@category}
+          class="btn btn-xs btn-ghost"
+          style="font-size: 0.65rem;"
+        >
+          {if @all_selected, do: "Deselect All", else: "Select All"}
+        </button>
+      </div>
       <ul style="overflow-y: auto; height: 22rem;">
         <li
           :for={critter <- @critters}
