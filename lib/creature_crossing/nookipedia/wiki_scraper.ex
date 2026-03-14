@@ -430,7 +430,7 @@ defmodule CreatureCrossing.Nookipedia.WikiScraper do
           fallback_from_page_images(name, ~r/#{escaped}.*Poster.*NH.*Icon/i)
         end)
 
-      amiibo_url =
+      raw_amiibo_url =
         if amiibo_file do
           Map.get_lazy(resolved, amiibo_file, fn ->
             fallback_from_page_images(name, ~r/#{escaped}.*amiibo.*card.*NA/i)
@@ -438,6 +438,14 @@ defmodule CreatureCrossing.Nookipedia.WikiScraper do
         else
           # No number found — try fallback search directly
           fallback_from_page_images(name, ~r/#{escaped}.*amiibo.*card.*NA/i)
+        end
+
+      # Reject non-standard cards (Sanrio, NLWa/Welcome amiibo)
+      amiibo_url =
+        if is_binary(raw_amiibo_url) and Regex.match?(~r/Sanrio|NLWa/, raw_amiibo_url) do
+          nil
+        else
+          raw_amiibo_url
         end
 
       fav_colors =
