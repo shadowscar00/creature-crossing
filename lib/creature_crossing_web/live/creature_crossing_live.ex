@@ -59,15 +59,23 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
 
   @impl true
   def handle_event("calculate", _params, socket) do
-    %{selected: selected, bugs: bugs, fish: fish, sea: sea, hemisphere: hemisphere} =
+    %{selected: selected, bugs: bugs, fish: fish, sea: sea, hemisphere: hemisphere, mode: mode} =
       socket.assigns
 
     all_critters = bugs ++ fish ++ sea
 
-    selected_critters =
-      Enum.filter(all_critters, fn c -> MapSet.member?(selected, c["name"]) end)
+    critters_to_calculate =
+      case mode do
+        "missing" ->
+          # Selected = what you're missing, calculate overlap for those
+          Enum.filter(all_critters, fn c -> MapSet.member?(selected, c["name"]) end)
 
-    result = CreatureCrossing.Overlap.calculate(selected_critters, hemisphere)
+        "have" ->
+          # Selected = what you have, calculate overlap for the complement (what you're missing)
+          Enum.reject(all_critters, fn c -> MapSet.member?(selected, c["name"]) end)
+      end
+
+    result = CreatureCrossing.Overlap.calculate(critters_to_calculate, hemisphere)
 
     {:noreply, assign(socket, result: result, caught: MapSet.new())}
   end
@@ -125,9 +133,19 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
 
   @impl true
   def render(assigns) do
+    total_critters = length(assigns.bugs) + length(assigns.fish) + length(assigns.sea)
+    selection_count = MapSet.size(assigns.selected)
+
+    # In "have" mode, we calculate on unselected critters (the complement)
+    calculate_count =
+      if assigns.mode == "have",
+        do: total_critters - selection_count,
+        else: selection_count
+
     assigns = assign(assigns, :min_selection, @min_selection)
-    assigns = assign(assigns, :selection_count, MapSet.size(assigns.selected))
-    assigns = assign(assigns, :can_calculate, assigns.selection_count >= @min_selection)
+    assigns = assign(assigns, :selection_count, selection_count)
+    assigns = assign(assigns, :calculate_count, calculate_count)
+    assigns = assign(assigns, :can_calculate, calculate_count >= @min_selection)
 
     if assigns.result do
       render_results(assigns)
@@ -193,8 +211,9 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
         </button>
         <p style="margin-top: 0.25rem;" class="text-sm text-base-content/70">
           {@selection_count} selected
-          {if @selection_count < @min_selection,
-            do: " (need #{@min_selection - @selection_count} more)",
+          {if @mode == "have", do: " (#{@calculate_count} missing)", else: ""}
+          {if @calculate_count < @min_selection,
+            do: " — need #{@min_selection - @calculate_count} more#{if @mode == "have", do: " unselected", else: ""}",
             else: ""}
         </p>
       </div>
@@ -318,7 +337,12 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
             loading="lazy"
             onerror="this.style.display='none'"
           />
-          <span style="flex: 1; text-align: center; font-weight: 600; font-size: 0.875rem;">{critter["name"]}</span>
+          <span style="flex: 1; text-align: center; font-weight: 600; font-size: 0.875rem;">
+            {critter["name"]}
+            <span :if={weather_notable?(critter["weather"])} style="font-size: 0.6rem; font-weight: 400; opacity: 0.6; display: block; margin-top: -0.125rem;">
+              {critter["weather"]}
+            </span>
+          </span>
           <span
             :if={MapSet.member?(@selected, critter["name"])}
             class="text-primary"
@@ -380,11 +404,11 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
       </p>
       <div style="font-size: 0.75rem; opacity: 0.7; text-align: left;">
         <p><strong>Location:</strong> {@critter["location"]}</p>
-        <p><strong>Rarity:</strong> {@critter["rarity"]}</p>
+        <p :if={@critter["rarity"]}><strong>Rarity:</strong> {@critter["rarity"]}</p>
         <p><strong>Time:</strong> {@time_str}</p>
-        <p><strong>Weather:</strong> {@weather}</p>
-        <p><strong>Size:</strong> {@shadow_size}</p>
-        <p><strong>Speed:</strong> {@speed}</p>
+        <p :if={weather_notable?(@critter["weather"])}><strong>Weather:</strong> {@weather}</p>
+        <p :if={@shadow_size != "N/A"}><strong>Size:</strong> {@shadow_size}</p>
+        <p :if={@speed != "N/A"}><strong>Speed:</strong> {@speed}</p>
       </div>
       <p :if={@caught} class="text-primary" style="font-weight: 700; margin-top: 0.5rem; text-align: center;">
         Caught!
@@ -395,5 +419,11 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
 
   defp sort_by_name(critters) do
     Enum.sort_by(critters, & &1["name"])
+  end
+
+  defp weather_notable?(nil), do: false
+  defp weather_notable?(w) do
+    downcased = String.downcase(w)
+    String.contains?(downcased, "rain") or String.contains?(downcased, "snow")
   end
 end
