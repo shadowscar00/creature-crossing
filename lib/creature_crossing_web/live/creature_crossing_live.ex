@@ -339,9 +339,6 @@ defmodule CreatureCrossingWeb.CreatureCrossingLive do
           />
           <span style="flex: 1; text-align: center; font-weight: 600; font-size: 0.875rem;">
             {critter["name"]}
-            <span :if={weather_notable?(critter["weather"])} style="font-size: 0.6rem; font-weight: 400; opacity: 0.6; display: block; margin-top: -0.125rem;">
-              {critter["weather"]}
-            </span>
           </span>
           <span
             :if={MapSet.member?(@selected, critter["name"])}
