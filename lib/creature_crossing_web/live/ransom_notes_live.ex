@@ -13,6 +13,7 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
   use CreatureCrossingWeb, :live_view
 
   alias CreatureCrossing.RansomNotes.WordPool
+  alias CreatureCrossing.RansomNotes.Judge
 
   @rounds_per_game 10
   @tiles_per_round 50
@@ -412,10 +413,8 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
     if String.trim(letter_text) == "" do
       {:noreply, socket}
     else
-      # TODO: Wire up Mercury API judge in PR 5
-      # For now, transition to judging and immediately return placeholder scores
       socket = assign(socket, phase: :judging)
-      send(self(), {:judge_result, {:ok, placeholder_score()}})
+      Judge.judge_async(socket.assigns.prompt, letter_text)
       {:noreply, socket}
     end
   end
@@ -504,10 +503,6 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
 
   defp all_lines_empty?(placed_tiles) do
     Enum.all?(placed_tiles, fn {_line, tiles} -> tiles == [] end)
-  end
-
-  defp placeholder_score do
-    %{relevance: Enum.random(3..8), creativity: Enum.random(3..8), commentary: "This is a placeholder score. The Mercury judge will be wired up soon!"}
   end
 
   defp rank_title(score, max) do
