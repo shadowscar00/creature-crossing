@@ -55,6 +55,7 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
             available_tiles={@available_tiles}
             placed_tiles={@placed_tiles}
             selected_tile={@selected_tile}
+            judging_error={@judging_error}
           />
         <% :judging -> %>
           <.render_judging prompt={@prompt} round={@round} />
