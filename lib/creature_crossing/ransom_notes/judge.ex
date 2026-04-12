@@ -88,7 +88,7 @@ defmodule CreatureCrossing.RansomNotes.Judge do
           %{role: "system", content: @system_prompt},
           %{role: "user", content: "Prompt: #{prompt}\n\nLetter:\n#{letter_text}"}
         ],
-        max_tokens: 512,
+        max_tokens: 2048,
         temperature: 0.7
       }
 

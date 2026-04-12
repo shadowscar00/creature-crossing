@@ -34,7 +34,8 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
         selected_tile: nil,
         scores: [],
         total_score: 0,
-        judging_error: nil
+        judging_error: nil,
+        last_letter_lines: []
       )
 
     {:ok, socket}
@@ -65,6 +66,7 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
             max_rounds={@max_rounds}
             scores={@scores}
             total_score={@total_score}
+            last_letter_lines={@last_letter_lines}
           />
         <% :game_over -> %>
           <.render_game_over scores={@scores} total_score={@total_score} max_rounds={@max_rounds} />
@@ -289,12 +291,17 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
       <div :if={@latest.line_interpretations != [] or @latest.overall_interpretation != ""}
            class="bg-base-100 border border-base-300 rounded-xl p-4 mb-4 text-left text-sm">
         <p class="font-bold mb-2 text-center">How Isabelle read your letter:</p>
-        <div :if={@latest.line_interpretations != []} class="space-y-1 mb-3">
-          <p :for={{interp, idx} <- Enum.with_index(@latest.line_interpretations, 1)}>
-            <span class="font-semibold opacity-60">Line {idx}:</span> {interp}
-          </p>
+        <div :if={@latest.line_interpretations != []} class="space-y-3 mb-3">
+          <div :for={{interp, idx} <- Enum.with_index(@latest.line_interpretations)}>
+            <p class="font-mono bg-amber-50 text-amber-950 border border-amber-200 rounded px-2 py-1 mb-1">
+              {Enum.at(@last_letter_lines, idx, "")}
+            </p>
+            <p class="opacity-70 pl-2">
+              → {interp}
+            </p>
+          </div>
         </div>
-        <div :if={@latest.overall_interpretation != ""} class="border-t border-base-300 pt-2">
+        <div :if={@latest.overall_interpretation != ""} class="border-t border-base-300 pt-2 mt-2">
           <p><span class="font-semibold">Overall:</span> {@latest.overall_interpretation}</p>
         </div>
       </div>
@@ -428,13 +435,13 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
   end
 
   def handle_event("submit_letter", _params, socket) do
-    letter_text = build_letter_text(socket.assigns.placed_tiles)
+    letter_lines = build_letter_lines(socket.assigns.placed_tiles)
 
-    if String.trim(letter_text) == "" do
+    if letter_lines == [] do
       {:noreply, socket}
     else
-      socket = assign(socket, phase: :judging)
-      Judge.judge_async(socket.assigns.prompt, letter_text)
+      socket = assign(socket, phase: :judging, last_letter_lines: letter_lines)
+      Judge.judge_async(socket.assigns.prompt, Enum.join(letter_lines, "\n"))
       {:noreply, socket}
     end
   end
@@ -506,7 +513,7 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
     end)
   end
 
-  defp build_letter_text(placed_tiles) do
+  defp build_letter_lines(placed_tiles) do
     0..6
     |> Enum.map(fn line ->
       placed_tiles
@@ -514,7 +521,6 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
       |> Enum.map_join(" ", & &1.word)
     end)
     |> Enum.reject(&(&1 == ""))
-    |> Enum.join("\n")
   end
 
   defp tile_rotation(id) do
