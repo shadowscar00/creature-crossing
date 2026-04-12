@@ -105,7 +105,7 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
 
   defp render_playing(assigns) do
     ~H"""
-    <div class="flex flex-col items-center gap-4 w-full max-w-3xl">
+    <div id="ransom-notes-game" phx-hook=".RansomNotesDragDrop" class="flex flex-col items-center gap-4 w-full max-w-3xl">
       <%!-- Prompt --%>
       <div class="text-center">
         <p class="text-sm opacity-60 mb-1">Round {@round} of {@max_rounds}</p>
@@ -120,7 +120,8 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
           id={"line-#{line_idx}"}
           phx-click="line_clicked"
           phx-value-line={line_idx}
-          class="absolute left-8 right-8 flex flex-wrap gap-1 items-end cursor-pointer hover:bg-primary/5 transition-colors"
+          data-line={line_idx}
+          class="drop-zone absolute left-8 right-8 flex flex-wrap gap-1 items-end cursor-pointer hover:bg-primary/5 transition-colors"
           style={"bottom: #{8 + (6 - line_idx) * 12.5}%; height: 10%; border-bottom: 1px solid rgba(0,0,0,0.15);"}
         >
           <span
@@ -135,13 +136,16 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
       </div>
 
       <%!-- Available tiles --%>
-      <div class="flex flex-wrap gap-2 justify-center w-full">
+      <div id="tile-pool" class="flex flex-wrap gap-2 justify-center w-full">
         <span
           :for={tile <- @available_tiles}
+          id={"tile-#{tile.id}"}
           phx-click="tile_selected"
           phx-value-id={tile.id}
+          draggable="true"
+          data-tile-id={tile.id}
           class={[
-            "inline-block px-2 py-1 border rounded text-sm font-mono cursor-pointer transition-all",
+            "tile-draggable inline-block px-2 py-1 border rounded text-sm font-mono cursor-grab transition-all select-none",
             if(@selected_tile && @selected_tile.id == tile.id,
               do: "bg-primary text-primary-content border-primary scale-110",
               else: "bg-base-100 border-base-300 hover:bg-primary/10 hover:border-primary"
@@ -161,6 +165,55 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
         Send Letter
       </button>
     </div>
+
+    <script :type={Phoenix.LiveView.ColocatedHook} name=".RansomNotesDragDrop">
+      export default {
+        mounted() {
+          // Drag start on tiles
+          this.el.addEventListener("dragstart", (e) => {
+            const tile = e.target.closest(".tile-draggable");
+            if (!tile) return;
+            e.dataTransfer.setData("text/plain", tile.dataset.tileId);
+            e.dataTransfer.effectAllowed = "move";
+            tile.classList.add("opacity-50");
+          });
+
+          this.el.addEventListener("dragend", (e) => {
+            const tile = e.target.closest(".tile-draggable");
+            if (tile) tile.classList.remove("opacity-50");
+          });
+
+          // Drop zones
+          this.el.addEventListener("dragover", (e) => {
+            const zone = e.target.closest(".drop-zone");
+            if (!zone) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            zone.classList.add("bg-primary/10");
+          });
+
+          this.el.addEventListener("dragleave", (e) => {
+            const zone = e.target.closest(".drop-zone");
+            if (zone) zone.classList.remove("bg-primary/10");
+          });
+
+          this.el.addEventListener("drop", (e) => {
+            e.preventDefault();
+            const zone = e.target.closest(".drop-zone");
+            if (!zone) return;
+            zone.classList.remove("bg-primary/10");
+            const tileId = e.dataTransfer.getData("text/plain");
+            const line = parseInt(zone.dataset.line);
+            if (tileId && !isNaN(line)) {
+              this.pushEvent("tile_dropped", {tile_id: parseInt(tileId), line: line});
+            }
+          });
+
+          // Touch support: tap tile to select, tap line to place
+          // (Already handled by phx-click events, no extra JS needed)
+        }
+      };
+    </script>
     """
   end
 
@@ -274,6 +327,26 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
       tile ->
         line = String.to_integer(line_str)
         available = Enum.reject(socket.assigns.available_tiles, &(&1.id == tile.id))
+        placed = Map.update!(socket.assigns.placed_tiles, line, &(&1 ++ [tile]))
+
+        {:noreply,
+         assign(socket,
+           available_tiles: available,
+           placed_tiles: placed,
+           selected_tile: nil
+         )}
+    end
+  end
+
+  def handle_event("tile_dropped", %{"tile_id" => tile_id, "line" => line}, socket) do
+    tile = Enum.find(socket.assigns.available_tiles, &(&1.id == tile_id))
+
+    case tile do
+      nil ->
+        {:noreply, socket}
+
+      tile ->
+        available = Enum.reject(socket.assigns.available_tiles, &(&1.id == tile_id))
         placed = Map.update!(socket.assigns.placed_tiles, line, &(&1 ++ [tile]))
 
         {:noreply,
