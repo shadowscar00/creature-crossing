@@ -285,6 +285,20 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
         "{@latest.commentary}"
       </div>
 
+      <%!-- Isabelle's interpretation --%>
+      <div :if={@latest.line_interpretations != [] or @latest.overall_interpretation != ""}
+           class="bg-base-100 border border-base-300 rounded-xl p-4 mb-4 text-left text-sm">
+        <p class="font-bold mb-2 text-center">How Isabelle read your letter:</p>
+        <div :if={@latest.line_interpretations != []} class="space-y-1 mb-3">
+          <p :for={{interp, idx} <- Enum.with_index(@latest.line_interpretations, 1)}>
+            <span class="font-semibold opacity-60">Line {idx}:</span> {interp}
+          </p>
+        </div>
+        <div :if={@latest.overall_interpretation != ""} class="border-t border-base-300 pt-2">
+          <p><span class="font-semibold">Overall:</span> {@latest.overall_interpretation}</p>
+        </div>
+      </div>
+
       <p class="text-lg mb-6">
         Running total: <strong>{@total_score}</strong> / {@round * 20}
       </p>
