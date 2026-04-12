@@ -27,6 +27,7 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
         round: 1,
         max_rounds: @rounds_per_game,
         prompt: nil,
+        remaining_prompts: [],
         available_tiles: [],
         placed_tiles: init_placed_tiles(),
         selected_tile: nil,
@@ -337,6 +338,8 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
 
   @impl true
   def handle_event("start_game", _params, socket) do
+    prompts = WordPool.all_prompts() |> Enum.shuffle()
+    socket = assign(socket, remaining_prompts: prompts)
     {:noreply, start_round(socket)}
   end
 
@@ -458,9 +461,12 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
   # -- Helpers --
 
   defp start_round(socket) do
+    [prompt | rest] = socket.assigns.remaining_prompts
+
     assign(socket,
       phase: :playing,
-      prompt: WordPool.random_prompt(),
+      prompt: prompt,
+      remaining_prompts: rest,
       available_tiles: WordPool.random_tiles(@tiles_per_round),
       placed_tiles: init_placed_tiles(),
       selected_tile: nil,
