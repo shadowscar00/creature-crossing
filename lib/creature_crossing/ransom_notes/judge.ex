@@ -115,6 +115,7 @@ defmodule CreatureCrossing.RansomNotes.Judge do
   defp parse_response(%{"choices" => [%{"message" => %{"content" => content}} | _]}) do
     content
     |> String.trim()
+    |> extract_json()
     |> Jason.decode()
     |> case do
       {:ok,
@@ -143,6 +144,19 @@ defmodule CreatureCrossing.RansomNotes.Judge do
 
   defp parse_response(other) do
     {:error, "Unexpected Mercury API response format: #{inspect(other)}"}
+  end
+
+  defp extract_json(text) do
+    # Strip markdown code fences if present
+    text = Regex.replace(~r/```json\s*/i, text, "")
+    text = Regex.replace(~r/```\s*$/, text, "")
+    text = String.trim(text)
+
+    # If it doesn't start with {, try to find the JSON object
+    case Regex.run(~r/\{.*\}/s, text) do
+      [json] -> json
+      _ -> text
+    end
   end
 
   defp get_api_key do
