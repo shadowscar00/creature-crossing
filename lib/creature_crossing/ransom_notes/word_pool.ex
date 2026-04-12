@@ -70,6 +70,16 @@ defmodule CreatureCrossing.RansomNotes.WordPool do
     villager resident islander neighbor
   )
 
+  # Villager species
+  @species_words ~w(
+    alligator anteater bear bird bull cat
+    chicken cow cub deer dog duck eagle
+    elephant frog goat gorilla hamster hippo
+    horse kangaroo koala lion monkey mouse
+    octopus ostrich penguin pig rabbit rhino
+    sheep squirrel tiger wolf
+  )
+
   # Personalities, hobbies, and styles
   @personality_words ~w(
     lazy smug peppy cranky snooty jock
@@ -143,22 +153,64 @@ defmodule CreatureCrossing.RansomNotes.WordPool do
     farm cook eat sleep wake
   )
 
-  # Connectors and common English
+  # Pronouns and question words
+  @pronoun_words ~w(
+    I me my mine myself
+    you your yours yourself
+    he him his she her hers
+    it we us our ours
+    they them their theirs
+    who what where why how
+    which whose whom
+    someone something anyone anything
+    everyone everything nobody nothing
+  )
+
+  # Common verbs (root forms, not covered by action_words)
+  @common_verbs ~w(
+    be have do make go come see
+    look find know think feel say
+    tell ask try use put keep let
+    start show turn call hold
+    stand sit open close read write
+    speak talk hear listen learn teach
+    bring send leave meet wait watch
+    seem become grow change follow lead
+    lose win break cut hit pull push
+    pick carry throw touch reach set
+    lay rise wear choose spend happen
+    remember forget believe hope wish
+    mean belong stay pass join share
+    add fill miss wonder suppose
+  )
+
+  # Connectors, prepositions, and common English
   @connector_words ~w(
     the a an and but or so if when because
     is are was were will would can could should
-    my your our their this that every some
+    shall may might must
+    this that these those every some
     many few all no not never always
     very really quite extreme absolute
     with from about into over under between
+    behind beside near through during
+    before after above below around
+    against along across toward upon
+    among until onto without within
     here there now then today tomorrow
-    one two three four five hundred thousand
-    million just only still even also again
+    one two three four five six seven eight nine ten
+    hundred thousand million
+    just only still even also again
     yes maybe perhaps definite
     well good bad best worst most least
     big great little old first last
     more less too much
     for at on in of to up by
+    away back down off out
+    than as like such
+    own other another each both either neither
+    same different next
+    enough almost already yet
   )
 
   # Seasonal and event words
@@ -198,11 +250,14 @@ defmodule CreatureCrossing.RansomNotes.WordPool do
   )
 
   @all_words @character_words ++
+             @species_words ++
              @personality_words ++
              @island_words ++
              @item_words ++
              @emotion_words ++
              @action_words ++
+             @pronoun_words ++
+             @common_verbs ++
              @connector_words ++
              @event_words ++
              @culture_words ++
