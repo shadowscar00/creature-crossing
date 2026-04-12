@@ -13,6 +13,7 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
   use CreatureCrossingWeb, :live_view
 
   alias CreatureCrossing.RansomNotes.WordPool
+  alias CreatureCrossing.RansomNotes.Judge
 
   @rounds_per_game 10
   @tiles_per_round 50
@@ -33,7 +34,8 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
         selected_tile: nil,
         scores: [],
         total_score: 0,
-        judging_error: nil
+        judging_error: nil,
+        last_letter_lines: []
       )
 
     {:ok, socket}
@@ -54,6 +56,7 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
             available_tiles={@available_tiles}
             placed_tiles={@placed_tiles}
             selected_tile={@selected_tile}
+            judging_error={@judging_error}
           />
         <% :judging -> %>
           <.render_judging prompt={@prompt} round={@round} />
@@ -63,6 +66,7 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
             max_rounds={@max_rounds}
             scores={@scores}
             total_score={@total_score}
+            last_letter_lines={@last_letter_lines}
           />
         <% :game_over -> %>
           <.render_game_over scores={@scores} total_score={@total_score} max_rounds={@max_rounds} />
@@ -107,6 +111,11 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
   defp render_playing(assigns) do
     ~H"""
     <div id="ransom-notes-game" phx-hook=".RansomNotesDragDrop" class="flex flex-col items-center gap-4 w-full max-w-3xl">
+      <%!-- Error alert --%>
+      <div :if={@judging_error} class="alert alert-error max-w-lg">
+        <span>Judging failed: {@judging_error}</span>
+      </div>
+
       <%!-- Prompt --%>
       <div class="text-center">
         <p class="text-sm opacity-60 mb-1">Round {@round} of {@max_rounds}</p>
@@ -278,6 +287,25 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
         "{@latest.commentary}"
       </div>
 
+      <%!-- Isabelle's interpretation --%>
+      <div :if={@latest.line_interpretations != [] or @latest.overall_interpretation != ""}
+           class="bg-base-100 border border-base-300 rounded-xl p-4 mb-4 text-left text-sm">
+        <p class="font-bold mb-2 text-center">How Isabelle read your letter:</p>
+        <div :if={@latest.line_interpretations != []} class="space-y-3 mb-3">
+          <div :for={{interp, idx} <- Enum.with_index(@latest.line_interpretations)}>
+            <p class="font-mono bg-amber-50 text-amber-950 border border-amber-200 rounded px-2 py-1 mb-1">
+              {Enum.at(@last_letter_lines, idx, "")}
+            </p>
+            <p class="opacity-70 pl-2">
+              → {interp}
+            </p>
+          </div>
+        </div>
+        <div :if={@latest.overall_interpretation != ""} class="border-t border-base-300 pt-2 mt-2">
+          <p><span class="font-semibold">Overall:</span> {@latest.overall_interpretation}</p>
+        </div>
+      </div>
+
       <p class="text-lg mb-6">
         Running total: <strong>{@total_score}</strong> / {@round * 20}
       </p>
@@ -407,15 +435,13 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
   end
 
   def handle_event("submit_letter", _params, socket) do
-    letter_text = build_letter_text(socket.assigns.placed_tiles)
+    letter_lines = build_letter_lines(socket.assigns.placed_tiles)
 
-    if String.trim(letter_text) == "" do
+    if letter_lines == [] do
       {:noreply, socket}
     else
-      # TODO: Wire up Mercury API judge in PR 5
-      # For now, transition to judging and immediately return placeholder scores
-      socket = assign(socket, phase: :judging)
-      send(self(), {:judge_result, {:ok, placeholder_score()}})
+      socket = assign(socket, phase: :judging, last_letter_lines: letter_lines)
+      Judge.judge_async(socket.assigns.prompt, Enum.join(letter_lines, "\n"))
       {:noreply, socket}
     end
   end
@@ -487,7 +513,7 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
     end)
   end
 
-  defp build_letter_text(placed_tiles) do
+  defp build_letter_lines(placed_tiles) do
     0..6
     |> Enum.map(fn line ->
       placed_tiles
@@ -495,7 +521,6 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
       |> Enum.map_join(" ", & &1.word)
     end)
     |> Enum.reject(&(&1 == ""))
-    |> Enum.join("\n")
   end
 
   defp tile_rotation(id) do
@@ -504,10 +529,6 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
 
   defp all_lines_empty?(placed_tiles) do
     Enum.all?(placed_tiles, fn {_line, tiles} -> tiles == [] end)
-  end
-
-  defp placeholder_score do
-    %{relevance: Enum.random(3..8), creativity: Enum.random(3..8), commentary: "This is a placeholder score. The Mercury judge will be wired up soon!"}
   end
 
   defp rank_title(score, max) do
