@@ -2,45 +2,72 @@ defmodule CreatureCrossing.RansomNotes.WordPool do
   @moduledoc """
   Word pool and prompt data for the Ransom Notes game.
   All words are single tokens — no compound phrases.
+  Words use root forms only (no -ing, -s, -ed suffixes).
+  Suffix tiles (ing, s, d, ed, er, ly) are provided for players to append.
   """
 
   @prompts [
+    # Positive / heartfelt
     "Write a letter convincing Tom Nook to forgive your home loan",
     "Compose a love letter to your favorite villager",
-    "Write a complaint to Isabelle about your neighbor",
-    "Pitch a new island getaway package to Dodo Airlines",
     "Write a review of The Roost coffee shop",
     "Describe your dream island to a potential visitor",
-    "Write a ransom note demanding 99,000 bells",
-    "Compose a resignation letter to Nook Inc",
-    "Write an apology to Blathers for donating so many bugs",
-    "Convince K.K. Slider to play at your birthday party",
-    "Write a strongly worded letter to Redd about his fake art",
-    "Draft a petition to make your villager the island representative",
-    "Write a letter begging Daisy Mae for a turnip discount",
     "Compose a thank you note to Sable for teaching you to sew",
-    "Write a complaint to the Happy Home Academy about your rating",
     "Convince Celeste to give you her best star fragment recipe",
     "Write a tourism brochure for your island",
-    "Draft a warning letter about the tarantula infestation",
-    "Write a breakup letter to a villager who wants to move away",
-    "Compose a formal request to Tortimer for island access",
     "Write a letter to your mom explaining why you moved to an island",
     "Pitch a new shop idea to the Nooklings",
     "Write a missing poster for your favorite gyroid",
+    "Convince K.K. Slider to play at your birthday party",
+    "Pitch a new island getaway package to Dodo Airlines",
+    "Write a letter begging Daisy Mae for a turnip discount",
+    "Compose a formal request to Tortimer for island access",
+    "Write a Yelp review of Able Sisters",
+    # Negative / confrontational
+    "Write a complaint to Isabelle about your neighbor",
+    "Write a ransom note demanding 99,000 bells",
+    "Compose a resignation letter to Nook Inc",
+    "Write a strongly worded letter to Redd about his fake art",
+    "Draft a warning letter about the tarantula infestation",
+    "Write a breakup letter to a villager who wants to move away",
+    "Write a complaint to the Happy Home Academy about your rating",
+    "Write an anonymous bulletin to complain about cockroach",
+    "Tell Blathers to get over his fear of bug",
+    "Announce to your island that you have uncovered Zipper's real identity",
+    "Write a threat to whoever keep running through your flower garden",
+    "Write an apology to an imperfect snowperson",
+    "Draft a petition to make a villager the new island representative",
+    # Meta / meme
+    "Explain to another player why they do not deserve to have Marshal on their island",
+    "Write a message to Nintendo telling them to bring back star tree",
+    "Write a message to Nintendo demanding the return of mean villager",
+    "Explain why Amiibo Festival was actually the best Animal Crossing game",
     "Compose a campaign speech for island representative election",
-    "Write a Yelp review of Able Sisters"
+    "Write an apology to Blathers for donating so many bug"
   ]
 
-  # Characters and proper nouns (all single words)
+  # All special characters from every AC game (single words only)
   @character_words ~w(
-    tom nook isabelle blathers celeste flick
-    cj daisy mae redd kicks sahara
+    tom nook isabelle blather celeste flick
+    cj daisy mae redd kick saharah
     brewster sable mabel label timmy tommy
-    tortimer kapp wisp gulliver gullivarrr
+    tortimer wisp gulliver gullivarrr
     pascal leif rover harriet katrina jack
     zipper joan lottie digby resetti
-    villager resident player islander neighbor
+    cyrus reese harvey luna lyle
+    pelly pete phyllis porter
+    copper booker gracie wendell
+    phineas serena shrunk nat pave
+    chip kaitlin katie franklin jingle
+    cornimer farley lloid blanca
+    orville wilbur niko wardell
+    don epona ganon link medli
+    felyne inkwell cece viche
+    beppe carlo giovanni
+    ai yu champ frillard
+    mineru tulin leilani leila gram
+    snowboy snowmam snowman snowtyke
+    villager resident islander neighbor
   )
 
   # Personalities, hobbies, and styles
@@ -48,61 +75,64 @@ defmodule CreatureCrossing.RansomNotes.WordPool do
     lazy smug peppy cranky snooty jock
     uchi normal sisterly grumpy cheerful
     cool elegant gorgeous cute simple active
-    education fitness fashion nature music play
+    education fitness fashion nature music
   )
 
-  # Island life and activities
+  # Island life and activities (root forms only)
   @island_words ~w(
     island paradise beach ocean river lake
     pond waterfall cliff bridge incline
     plaza museum shop cafe airport dock
     tent house mansion basement attic
     garden orchard campsite lighthouse
-    fishing catching digging planting watering
-    shaking crafting decorating terraforming
-    swimming diving snorkeling stargazing
     fossil bug fish sea creature artwork
     flower tree fruit weed shell sand
-    apples oranges peaches pears cherries coconuts
-    roses tulips lilies hyacinths cosmos
-    mums pansies windflowers
+    leaf ground dirt rock mud path
+    hill slope mountain peak valley
+    apple orange peach pear cherry coconut
+    rose tulip lily hyacinth cosmo
+    mum pansy windflower
+    bush hedge fence gate sign
+    reef tide shore coast bay
   )
 
   # Items, currency, and game mechanics
   @item_words ~w(
-    bells nook miles tickets turnips
+    bell mile ticket turnip
     mortgage loan debt interest payment
     shovel axe net rod slingshot
-    wand ladder vaulting pole wetsuit
-    recipe diy workbench tools material
+    wand ladder pole wetsuit
+    recipe diy workbench tool material
     wood stone iron clay gold nugget
     star fragment pearl bamboo mushroom
-    balloon present bottle message fossil
-    gyroid song vinyl record player
-    stalk market stonks profit loss
+    balloon present bottle message
+    gyroid song vinyl record
+    stalk market stonk profit loss
     tarantula scorpion butterfly beetle
+    wasp bee hive flea cockroach
     shark tuna bass coelacanth oarfish
-    nookphone critterpedia catalog upgrade
+    nookphone critterpedia catalog
   )
 
-  # Emotions and descriptors
+  # Emotions and descriptors (root forms, no -ed suffixes)
   @emotion_words ~w(
-    happy sad angry excited nervous calm
-    beautiful ugly amazing terrible wonderful
-    awful lovely adorable hideous stunning
-    cozy peaceful chaotic cursed blessed
+    happy sad angry excite nervous calm
+    beautiful ugly amaze terrible wonderful
+    awful lovely adorable hideous stun
+    cozy peaceful chaotic curse bless
     suspicious shady sketchy legitimate rare
-    legendary mythical ordinary boring magnificent
+    legendary mythical ordinary bore magnificent
     tiny huge enormous precious worthless
-    haunted spooky festive magical sparkly
+    haunt spooky festive magical sparkle
+    small medium large
   )
 
-  # Actions and verbs
+  # Actions and verbs (root forms only)
   @action_words ~w(
     give take sell buy trade donate display
     collect catch dig plant water shake craft
     build destroy move demolish upgrade
-    visit invite welcome kick evict
+    visit invite welcome evict
     sing dance play run walk fly swim
     hide seek steal borrow return
     love hate want need demand beg
@@ -110,23 +140,24 @@ defmodule CreatureCrossing.RansomNotes.WordPool do
     complain scream whisper gossip confess
     bury discover hoard smuggle escape
     time travel reset regret
+    farm cook eat sleep wake
   )
 
-  # Connectors and common English (needed to form sentences)
+  # Connectors and common English
   @connector_words ~w(
     the a an and but or so if when because
     is are was were will would can could should
     my your our their this that every some
     many few all no not never always
-    very really quite extremely absolutely
+    very really quite extreme absolute
     with from about into over under between
     here there now then today tomorrow
     one two three four five hundred thousand
     million just only still even also again
-    yes no maybe perhaps definitely
+    yes maybe perhaps definite
     well good bad best worst most least
-    big small great little old new first last
-    more less too much very
+    big great little old first last
+    more less too much
     for at on in of to up by
   )
 
@@ -137,26 +168,33 @@ defmodule CreatureCrossing.RansomNotes.WordPool do
     morning evening night weekend
     party festival concert picnic ceremony
     birthday wedding holiday halloween
-    harvest bunny fishing tourney
-    fireworks meteor shower aurora
+    harvest bunny tourney
+    firework meteor shower aurora
     new year valentine easter
   )
 
   # Community culture and meta references
   @culture_words ~w(
-    dreamie villager hunting mystery
-    nook inc corporate grind hustle
-    catalog everything completionist
-    hybrid breeding golden watering
-    money rock tree bell voucher
-    deserted getaway package
+    dreamie hunt mystery
+    inc corporate grind hustle
+    complete hybrid breed golden
+    money voucher
+    desert getaway package
     southern northern hemisphere
-    pocket camp horizons leaf
+    pocket camp horizon
     wild world city folk
-    amiibo card invite move
-    plot empty void full
-    entrance path custom design
+    amiibo card plot
+    empty void full
+    entrance custom design
     pattern creator pro
+    marshal raymond ankha
+    nintendo update patch
+    stop terminal
+  )
+
+  # Suffix tiles for players to append to root words
+  @suffix_words ~w(
+    s d ed ing er ly
   )
 
   @all_words @character_words ++
@@ -167,7 +205,8 @@ defmodule CreatureCrossing.RansomNotes.WordPool do
              @action_words ++
              @connector_words ++
              @event_words ++
-             @culture_words
+             @culture_words ++
+             @suffix_words
 
   @doc "Returns a random prompt string."
   def random_prompt do
