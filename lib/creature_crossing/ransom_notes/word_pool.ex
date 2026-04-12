@@ -31,19 +31,19 @@ defmodule CreatureCrossing.RansomNotes.WordPool do
     "Draft a warning letter about the tarantula infestation",
     "Write a breakup letter to a villager who wants to move away",
     "Write a complaint to the Happy Home Academy about your rating",
-    "Write an anonymous bulletin to complain about cockroach",
-    "Tell Blathers to get over his fear of bug",
+    "Write an anonymous bulletin to complain about cockroaches",
+    "Tell Blathers to get over his fear of bugs",
     "Announce to your island that you have uncovered Zipper's real identity",
-    "Write a threat to whoever keep running through your flower garden",
+    "Write a threat to whoever keeps running through your flower garden",
     "Write an apology to an imperfect snowperson",
     "Draft a petition to make a villager the new island representative",
     # Meta / meme
     "Explain to another player why they do not deserve to have Marshal on their island",
-    "Write a message to Nintendo telling them to bring back star tree",
-    "Write a message to Nintendo demanding the return of mean villager",
+    "Write a message to Nintendo telling them to bring back star trees",
+    "Write a message to Nintendo demanding the return of mean villagers",
     "Explain why Amiibo Festival was actually the best Animal Crossing game",
     "Compose a campaign speech for island representative election",
-    "Write an apology to Blathers for donating so many bug"
+    "Write an apology to Blathers for donating so many bugs"
   ]
 
   # All special characters from every AC game (single words only)
