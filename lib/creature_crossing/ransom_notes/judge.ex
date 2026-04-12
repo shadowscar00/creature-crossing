@@ -5,7 +5,7 @@ defmodule CreatureCrossing.RansomNotes.Judge do
   """
 
   @api_url "https://api.inceptionlabs.ai/v1/chat/completions"
-  @model "mercury-coder-small"
+  @model "mercury-2"
 
   @system_prompt """
   You are Isabelle from Animal Crossing, judging letters written by island residents.

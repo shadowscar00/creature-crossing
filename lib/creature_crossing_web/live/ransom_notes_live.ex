@@ -108,6 +108,11 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
   defp render_playing(assigns) do
     ~H"""
     <div id="ransom-notes-game" phx-hook=".RansomNotesDragDrop" class="flex flex-col items-center gap-4 w-full max-w-3xl">
+      <%!-- Error alert --%>
+      <div :if={@judging_error} class="alert alert-error max-w-lg">
+        <span>Judging failed: {@judging_error}</span>
+      </div>
+
       <%!-- Prompt --%>
       <div class="text-center">
         <p class="text-sm opacity-60 mb-1">Round {@round} of {@max_rounds}</p>
