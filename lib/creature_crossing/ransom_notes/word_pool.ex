@@ -48,25 +48,25 @@ defmodule CreatureCrossing.RansomNotes.WordPool do
 
   # All special characters from every AC game (single words only)
   @character_words ~w(
-    tom nook isabelle blather celeste flick
-    cj daisy mae redd kick saharah
-    brewster sable mabel label timmy tommy
-    tortimer wisp gulliver gullivarrr
-    pascal leif rover harriet katrina jack
-    zipper joan lottie digby resetti
-    cyrus reese harvey luna lyle
-    pelly pete phyllis porter
-    copper booker gracie wendell
-    phineas serena shrunk nat pave
-    chip kaitlin katie franklin jingle
-    cornimer farley lloid blanca
-    orville wilbur niko wardell
-    don epona ganon link medli
-    felyne inkwell cece viche
-    beppe carlo giovanni
-    ai yu champ frillard
-    mineru tulin leilani leila gram
-    snowboy snowmam snowman snowtyke
+    Tom Nook Isabelle Blathers Celeste Flick
+    CJ Daisy Mae Redd Kicks Saharah
+    Brewster Sable Mabel Label Timmy Tommy
+    Tortimer Wisp Gulliver Gullivarrr
+    Pascal Leif Rover Harriet Katrina Jack
+    Zipper Joan Lottie Digby Resetti
+    Cyrus Reese Harvey Luna Lyle
+    Pelly Pete Phyllis Porter
+    Copper Booker Gracie Wendell
+    Phineas Serena Shrunk Nat Pave
+    Chip Kaitlin Katie Franklin Jingle
+    Cornimer Farley Lloid Blanca
+    Orville Wilbur Niko Wardell
+    Don Epona Ganon Link Medli
+    Felyne Inkwell Cece Viche
+    Beppe Carlo Giovanni
+    Ai Yu Champ Frillard
+    Mineru Tulin Leilani Leila Gram
+    Snowboy Snowmam Snowman Snowtyke
     villager resident islander neighbor
   )
 
@@ -239,8 +239,8 @@ defmodule CreatureCrossing.RansomNotes.WordPool do
     empty void full
     entrance custom design
     pattern creator pro
-    marshal raymond ankha
-    nintendo update patch
+    Marshal Raymond Ankha
+    Nintendo update patch
     stop terminal
   )
 
