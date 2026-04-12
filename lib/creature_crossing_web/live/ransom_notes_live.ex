@@ -112,31 +112,57 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
         <p class="text-xl font-bold">{@prompt}</p>
       </div>
 
-      <%!-- Stationery --%>
-      <div class="relative bg-amber-50 border-8 border-amber-900/20 rounded-lg w-full"
-           style="aspect-ratio: 4/3;">
-        <div
-          :for={line_idx <- 0..6}
-          id={"line-#{line_idx}"}
-          phx-click="line_clicked"
-          phx-value-line={line_idx}
-          data-line={line_idx}
-          class="drop-zone absolute left-8 right-8 flex flex-wrap gap-1 items-end cursor-pointer hover:bg-primary/5 transition-colors"
-          style={"bottom: #{8 + (6 - line_idx) * 12.5}%; height: 10%; border-bottom: 1px solid rgba(0,0,0,0.15);"}
-        >
-          <span
-            :for={tile <- Map.get(@placed_tiles, line_idx, [])}
-            phx-click="tile_removed"
-            phx-value-id={tile.id}
-            class="inline-block px-2 py-0.5 bg-base-100 border border-base-300 rounded text-sm font-mono cursor-pointer hover:bg-error/20 hover:border-error transition-colors"
-          >
-            {tile.word}
-          </span>
+      <%!-- NL Airmail Stationery --%>
+      <div class="relative w-full rounded-sm shadow-lg" style="aspect-ratio: 4/3;">
+        <%!-- Diagonal stripe border (airmail style) --%>
+        <div class="absolute inset-0 rounded-sm overflow-hidden"
+             style="background: repeating-linear-gradient(
+               -45deg,
+               #c41e3a 0px, #c41e3a 8px,
+               #ffffff 8px, #ffffff 16px,
+               #1a4b8c 16px, #1a4b8c 24px,
+               #ffffff 24px, #ffffff 32px
+             );">
+        </div>
+        <%!-- Inner white writing area --%>
+        <div class="absolute rounded-sm bg-white"
+             style="top: 14px; left: 14px; right: 14px; bottom: 14px;">
+          <%!-- Stamp decoration (top-right) --%>
+          <div class="absolute top-2 right-3 opacity-30" style="width: 36px; height: 36px;">
+            <svg viewBox="0 0 36 36" fill="none" stroke="#888" stroke-width="1">
+              <rect x="2" y="2" width="32" height="32" rx="1" stroke-dasharray="2 2" />
+              <circle cx="18" cy="16" r="7" />
+              <path d="M14 20 Q18 28 22 20" />
+            </svg>
+          </div>
+          <%!-- Writing lines --%>
+          <div class="absolute flex flex-col justify-evenly"
+               style="top: 12%; left: 5%; right: 5%; bottom: 5%;">
+            <div
+              :for={line_idx <- 0..6}
+              id={"line-#{line_idx}"}
+              phx-click="line_clicked"
+              phx-value-line={line_idx}
+              data-line={line_idx}
+              class="drop-zone flex flex-wrap gap-1 items-end cursor-pointer hover:bg-blue-50/50 transition-colors"
+              style="flex: 1; border-bottom: 1px solid #c8c8c8; padding-bottom: 2px;"
+            >
+              <span
+                :for={tile <- Map.get(@placed_tiles, line_idx, [])}
+                phx-click="tile_removed"
+                phx-value-id={tile.id}
+                class="inline-block px-1.5 py-0 bg-amber-50 border border-amber-300 rounded text-xs font-mono cursor-pointer hover:bg-red-100 hover:border-red-400 transition-colors shadow-sm"
+                style="transform: rotate({tile_rotation(tile.id)}deg);"
+              >
+                {tile.word}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
       <%!-- Available tiles --%>
-      <div id="tile-pool" class="flex flex-wrap gap-2 justify-center w-full">
+      <div id="tile-pool" class="flex flex-wrap gap-1.5 justify-center w-full p-2 bg-base-200/50 rounded-lg">
         <span
           :for={tile <- @available_tiles}
           id={"tile-#{tile.id}"}
@@ -145,12 +171,13 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
           draggable="true"
           data-tile-id={tile.id}
           class={[
-            "tile-draggable inline-block px-2 py-1 border rounded text-sm font-mono cursor-grab transition-all select-none",
+            "tile-draggable inline-block px-2 py-1 border rounded text-sm font-mono cursor-grab transition-all select-none shadow-sm",
             if(@selected_tile && @selected_tile.id == tile.id,
-              do: "bg-primary text-primary-content border-primary scale-110",
-              else: "bg-base-100 border-base-300 hover:bg-primary/10 hover:border-primary"
+              do: "bg-primary text-primary-content border-primary scale-110 shadow-md",
+              else: "bg-amber-50 border-amber-300 hover:bg-amber-100 hover:border-amber-400 hover:shadow-md"
             )
           ]}
+          style={"transform: rotate(#{tile_rotation(tile.id)}deg);"}
         >
           {tile.word}
         </span>
@@ -463,6 +490,10 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
     end)
     |> Enum.reject(&(&1 == ""))
     |> Enum.join("\n")
+  end
+
+  defp tile_rotation(id) do
+    rem(id * 7, 7) - 3
   end
 
   defp all_lines_empty?(placed_tiles) do
