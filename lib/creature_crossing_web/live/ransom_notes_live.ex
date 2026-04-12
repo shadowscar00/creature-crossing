@@ -151,7 +151,7 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
                 :for={tile <- Map.get(@placed_tiles, line_idx, [])}
                 phx-click="tile_removed"
                 phx-value-id={tile.id}
-                class="inline-block px-1.5 py-0 bg-amber-50 border border-amber-300 rounded text-xs font-mono cursor-pointer hover:bg-red-100 hover:border-red-400 transition-colors shadow-sm"
+                class="inline-block px-1.5 py-0 bg-amber-50 text-amber-950 border border-amber-300 rounded text-xs font-mono cursor-pointer hover:bg-red-100 hover:border-red-400 transition-colors shadow-sm"
                 style="transform: rotate({tile_rotation(tile.id)}deg);"
               >
                 {tile.word}
@@ -174,7 +174,7 @@ defmodule CreatureCrossingWeb.RansomNotesLive do
             "tile-draggable inline-block px-2 py-1 border rounded text-sm font-mono cursor-grab transition-all select-none shadow-sm",
             if(@selected_tile && @selected_tile.id == tile.id,
               do: "bg-primary text-primary-content border-primary scale-110 shadow-md",
-              else: "bg-amber-50 border-amber-300 hover:bg-amber-100 hover:border-amber-400 hover:shadow-md"
+              else: "bg-amber-50 text-amber-950 border-amber-300 hover:bg-amber-100 hover:border-amber-400 hover:shadow-md"
             )
           ]}
           style={"transform: rotate(#{tile_rotation(tile.id)}deg);"}
