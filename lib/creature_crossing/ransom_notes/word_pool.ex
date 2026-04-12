@@ -244,6 +244,19 @@ defmodule CreatureCrossing.RansomNotes.WordPool do
     stop terminal
   )
 
+  # Expressive words and onomatopoeia
+  @expressive_words ~w(
+    yay ugh boo bang crash boom yikes
+    whoa ooh ahh eek oof hmm shh
+    wow haha oops gulp mwah poof splat
+    honk ribbit screech sigh gasp growl
+    meow woof quack cluck moo baa neigh
+    squeak chirp hiss roar buzz croak
+  )
+
+  # Punctuation marks (single characters, except ellipsis)
+  @punctuation ~w(! ? . , : ; - ... ~)
+
   # Suffix tiles for players to append to root words
   @suffix_words ~w(
     s d ed ing er ly
@@ -261,6 +274,8 @@ defmodule CreatureCrossing.RansomNotes.WordPool do
              @connector_words ++
              @event_words ++
              @culture_words ++
+             @expressive_words ++
+             @punctuation ++
              @suffix_words
 
   @doc "Returns a random prompt string."
